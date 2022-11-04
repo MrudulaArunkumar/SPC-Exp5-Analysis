@@ -1,0 +1,1155 @@
+---
+title: "Data Analysis - Experiment 5"
+author: "Mrudula"
+date: "`r format(Sys.time(), '%d %B,%Y')`"
+output: 
+    rmdformats::readthedown:
+      code_folding: hide
+    toc: yes
+    toc_float: yes
+    highlight: breezedark
+    lightbox: true
+      
+     
+---
+
+This report gives the detailed analysis on Experiment 5 on the Sensory Pre conditioning series where we aimed to analyse whether responses can be indirectly retrieved by an associated stimuli. 
+Contrary to previous experiment where the S-S associations were two unrelated adjectives, this time we used a noun as S1 and an adjective as S2. Here are the pairs:
+
+> Jack - bold
+
+> Tim - fair
+
+> Max - neat
+
+> Ron - Calm
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(plyr)
+library(tidyverse)
+library(afex)
+library(knitr)
+library(pander)
+library(paletteer)
+library(rmdformats)
+library(patchwork)
+library(Rmisc)
+library(lme4)
+library(lmerTest)
+library(sjPlot)
+library(here)
+library(emmeans)
+
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+dataForced <- read_csv(here("data","ExpForceddata.csv"))
+dataFree <- read_csv(here("data","ExpFreedata.csv"))
+```
+
+## Phase 2
+
+This Phase consisted of a forced choice task which is a colour classification task. All **4** S2s were presented - 
+
+    - calm & fair in yellow 90% of the time (valid)
+    - bold & neat in blue
+    
+**Two** associated S1s Jack (S1 with bold) and Ron (S1 with calm) were also shown in the associated colour - blue and yellow respectively.
+
+The performances on the valid and invalid trials were assessed to check if contingencies and S-R associations were learnt.
+
+### t tests to check for contingency learning effects
+
+#### Reaction Time
+
+Participants show a learning effect in Reaction Time for S2-R trials with $t = 2.98, p <.001$ with a mean difference of 10.3ms and for S1-R trials, $t = 2.31, p = .016, p = .01$ and a mean difference of 14.43 ms
+
+
+```{r}
+Phase2 <- dataForced %>% 
+  filter(Phase == 2) %>% 
+  group_by(PROLIFIC_PID,Validity,Condition) %>% 
+  summarize(RT = mean(RT_io,na.rm = TRUE),
+            ER = mean(ER, na.rm = TRUE))
+
+aov1 <- aov_ez(data = Phase2,
+               id = "PROLIFIC_PID",
+               dv = "RT",
+               within = c("Validity","Condition"),
+               anova_table = list(correction = "none",
+                                  es = "pes"))
+nice(aov1)
+
+pander(t.test(data = Phase2, RT~Validity,alternative = "greater",subset = (Condition == "S2-R"), paired = TRUE), style = "rmarkdown", caption = "T test output for the S2-R Valid trials")
+
+pander(t.test(data = Phase2, RT~Validity,alternative = "greater",subset = (Condition == "S1-R Coloured"), paired = TRUE), style = "rmarkdown", caption = "T test output for the Coloured S1-R Valid trials")
+```
+
+#### Error Rate
+
+The same holds while analysing the error data  for S2-R ,$t = 2.44, p < .01$ , mean difference of 2.2% but is weaker for the coloured S1-R trials, $t = .54, p = .29$
+
+```{r}
+## error Rate
+aov1er <- aov_ez(data = Phase2,
+               id = "PROLIFIC_PID",
+               dv = "ER",
+               within = c("Validity","Condition"),
+               anova_table = list(correction = "none",
+                                  es = "pes"))
+nice(aov1er)
+
+
+pander(t.test(data = Phase2, ER~Validity,alternative = "greater",subset = (Condition == "S2-R"), paired = TRUE), style = "rmarkdown", caption = "T test output for the S2-R Valid trials")
+
+pander(t.test(data = Phase2, ER~Validity,alternative = "greater",subset = (Condition == "S1-R Coloured"), paired = TRUE), style = "rmarkdown", caption = "T test output for the Coloured S1-R Valid trials")
+#write_csv(file = here("data","Phase2_MC.csv"),Phase2)
+
+```
+
+### Plots
+
+```{r fig.align='center', fig.width=10,fig.height=8}
+meansRT <- summarySEwithin(data = Phase2, measurevar = "RT",
+                           withinvars = c("Validity","Condition"), 
+                           idvar = "PROLIFIC_PID", 
+                           na.rm = TRUE, 
+                           conf.interval = 0.95)
+
+plot1 <- ggplot(meansRT, aes(x=Validity, y=RT,fill = Validity))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin = RT - ci, ymax =RT + ci),width = .2, size = 1,position = position_dodge(.9))+
+  #scale_fill_manual(values = c("midnightblue","skyblue"))+
+  coord_cartesian(ylim = c(400,500))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  ylab("Reaction Time in ms")+xlab("Validity")+ # or labs(x = , y =)
+  facet_grid(.~Condition)
+  
+
+##same for ER
+meansER <- summarySEwithin(data = Phase2, measurevar = "ER",
+                           withinvars = c("Validity","Condition"), 
+                           idvar = "PROLIFIC_PID", 
+                           na.rm = TRUE, 
+                           conf.interval = 0.95)
+
+plot2 <- ggplot(meansER, aes(x=Validity, y=ER,fill = Validity))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin = ER - ci, ymax = ER + ci),width = .2, size = 1,position = position_dodge(.9))+
+  #scale_fill_manual(values = c("midnightblue","skyblue"))+
+  coord_cartesian(ylim = c(0,0.15))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  ylab("Error Rate")+xlab("Validity")+ # or labs(x = , y =)
+  facet_grid(.~Condition)
+
+
+Phase2Plot <- (plot1 + plot2) +
+  plot_annotation(tag_levels = "A", title = "Phase2 : Contingency Learning Effects")+
+  plot_layout(guides = "collect")&
+  theme_classic()&
+  theme(text = element_text(size = 20, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18))&
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+
+Phase2Plot
+#ggsave(filename = "Phase2_plot.png", width = 10, height = 6,Phase2Plot)
+```
+
+## Phase 3.1
+
+This block contains a free choice task where the words appear in the neutral colour - all the S2s and S1s are shownn equal number of times and participants are asked to guess the response (colour).
+
+The performance on the S2s and the coloured S1s will give an insight on whether participants used the learnt associations in Phase 2.
+
+### Manipulation check for S2-R and coloured S1-R
+
+
+```{r include=FALSE}
+Phase31_MC <- dataFree %>% 
+  filter(Phase == "3.1") %>% 
+  filter(Condition == "S2-R" | Condition == "S1-R Coloured")
+  
+#table(Phase31_MC$ChoiceType,Phase31_MC$Condition,Phase31_MC$PROLIFIC_PID)
+
+
+Phase31_MC <- Phase31_MC %>% 
+  mutate(Validity = ifelse(FreeChoiceResp == CorrectAnswer,"Valid",
+                           ifelse(FreeChoiceResp != CorrectAnswer,"invalid",NA)))
+#table(Phase31_MC$Validity)
+
+Phase31_MC$Condition <- as.factor(Phase31_MC$Condition)
+Phase31_MC$Validity <- as.factor(Phase31_MC$Validity)
+#Computing the raw keypresses per condition and validity
+Phase31_MCagg <- Phase31_MC %>% 
+  group_by(PROLIFIC_PID,Condition,Validity, .drop = FALSE) %>% 
+  filter(Phase == 3.1) %>% 
+  summarise(Freq = n())
+
+
+#converting to wide format to compute the proportion congruency
+Phase31_wide <- Phase31_MCagg %>%  
+  pivot_wider(names_from = Validity,
+              values_from = Freq)
+Phase31_wide[is.na(Phase31_wide)] <- 0
+#computing PC
+Phase31_wide <- Phase31_wide %>% 
+  mutate(ValidPC = Valid/(Valid+invalid),
+         InvalidPC = invalid/(Valid +invalid))
+
+#shifting back to long fomrat to merge with the RTs and conducting analysis
+Phase31_PC<- Phase31_wide %>% 
+  pivot_longer(cols = contains("PC"),
+    names_to = c("Validity"),
+    values_to = c("PC"))
+
+Phase31_PC <- Phase31_PC %>% 
+  mutate(Validity = str_remove(Validity, "PC"),
+         Validity = str_replace(Validity,"Invalid","invalid")) %>% select(-Valid,-invalid)
+
+
+#computing the RTs for MC trials
+MCRT_3.1 <- Phase31_MC %>% 
+  group_by(PROLIFIC_PID,Validity, Condition, .drop = FALSE) %>%
+  filter(Phase==3.1) %>% 
+  summarise(RT = mean(FreeRT, na.rm = TRUE))
+
+Phase31_MCagg <- merge(Phase31_MCagg,MCRT_3.1, by = c("PROLIFIC_PID","Validity","Condition"))
+#write_csv(file = here("data", "Phase31_MC_agg.csv"),Phase31_MCagg)
+
+#write_csv(file = here("data","Phase31_MC_PC.csv"),Phase31_PC)
+
+```
+
+
+They significantly guess better than chance level for the S2, $t = 7.09, p < .001$ with a mean of **63.8%** and for S1, $t = 15.78, p < .001$, with a mean of **66.97%**.
+
+```{r}
+Phase31_MCagg <- read_csv(here("data","Phase31_MC_agg.csv"))
+Phase31_PC <- read_csv(here("data","Phase31_MC_PC.csv"))
+Phase31_PC_valid <- Phase31_PC %>% filter(Validity=="Valid")
+Phase31_MCS2_Validpc <- Phase31_PC %>% 
+  filter(Validity == "Valid" & Condition == "S2-R")
+
+Phase31_MCS1_Validpc <- Phase31_PC %>% 
+  filter(Validity == "Valid" & Condition == "S1-R Coloured")
+
+pander(t.test(Phase31_MCS2_Validpc$PC, mu = 0.50, alternative = "greater"), style = "rmarkdown", caption = "T test output for the S2-R Valid trials")
+
+pander(t.test(Phase31_MCS1_Validpc$PC, mu = 0.25, alternative = "greater"), style = "rmarkdown", caption = "T test output for the S1-R Coloured Valid trials")
+
+```
+
+The valid guess proportion does not differ between S2 and S1-R coloured
+
+```{r}
+pccomp <- aov_ez(data = Phase31_PC_valid,
+                 dv = "PC",
+                 id = "PROLIFIC_PID",
+                 within = "Condition")
+nice(pccomp)
+```
+
+While comparing the RTs there is no significant difference between valid and invalid guess
+
+```{r}
+# rtcomp <- aov_ez(data = Phase31_MCagg,
+#                  dv = "RT",
+#                  id = "PROLIFIC_PID",
+#                  within = c("Validity","Condition"))
+# nice(rtcomp)
+```
+### Plots
+
+```{r, fig.show="hold",out.width="50%"}
+mean31_PC <- summarySEwithin(data = Phase31_PC, 
+                           measurevar = "PC",
+                           withinvars = c("Validity","Condition"),
+                           idvar = "PROLIFIC_PID", 
+                           na.rm = TRUE, 
+                           conf.interval = 0.95)
+mean31_PC <- mean31_PC %>% filter(Validity=="Valid")
+
+#plots
+MC31_PC <- ggplot(mean31_PC, aes(x = Condition, y = PC, fill = "midnightblue"))+
+  geom_bar(alpha = 0.75, stat = "identity")+
+  geom_hline(yintercept = 0.50, linetype = "dashed")+
+  geom_errorbar(aes(ymin = PC - se, ymax = PC + se),width = .2, size = 1,position = position_dodge(.9))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab(NULL)+
+  theme_classic()+
+  theme(text = element_text(size = 18, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18),
+        legend.position = "none")+
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+MC31_PC
+#ggsave(filename = "Phase3MC_PlotPC.png",MC31_PC)
+
+mean31RT <- summarySEwithin(data = Phase31_MCagg, measurevar = "RT",
+                           withinvars = c("Validity","Condition"), 
+                           idvar = "PROLIFIC_PID", 
+                           na.rm = TRUE, 
+                           conf.interval = 0.95)
+
+MC31_RT <- ggplot(mean31RT, aes(x=Validity, y=RT,fill = Validity))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin = RT - ci, ymax =RT + ci),width = .2, size = 1,position = position_dodge(.9))+
+  #scale_fill_manual(values = c("midnightblue","skyblue"))+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(500,700))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  ylab("Reaction Time in ms")+xlab("Validity")+ # or labs(x = , y =)
+  facet_grid(.~Condition)+theme_classic()+
+  theme(text = element_text(size = 20, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18),
+        legend.position = "none")+
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+MC31_RT
+#ggsave(filename = "Phase31MC_PlotRT.png",MC31_RT)
+```
+
+
+### Transfer Check for S1
+
+```{r include=FALSE}
+#create a df containing only S1-R transfer trials
+Phase31_TC <- dataFree %>% 
+  filter(Phase == "3.1") %>% 
+  filter(Condition == "S1-R Transfer")
+
+
+
+Phase31_TC <- Phase31_TC %>% 
+  mutate(FreeChoiceResp = str_remove_all(FreeChoiceResp,"[[:punct:]]"))
+
+table(Phase31_TC$FreeChoiceAccuracy,Phase31_TC$Condition)
+table(Phase31_TC$ChkFree, Phase31_TC$Condition)
+Phase31_TC <- Phase31_TC %>% 
+  mutate(Validity = ifelse(FreeChoiceResp == CorrectAnswer,"Valid",
+                           ifelse(FreeChoiceResp != CorrectAnswer,"invalid",NA)))
+#table(Phase31_TC$Validity)
+
+Phase31_TC$Condition <- as.factor(Phase31_TC$Condition)
+Phase31_TC$Validity <- as.factor(Phase31_TC$Validity)
+
+#similar processes done in MC analysis
+Phase31_TCagg <- Phase31_TC %>% 
+  group_by(PROLIFIC_PID,Condition,Validity, .drop = FALSE) %>% 
+  summarise(Freq = n())
+
+Phase31_transferwide <- Phase31_TCagg %>%  
+  pivot_wider(names_from = Validity,
+              values_from = Freq)
+Phase31_transferwide[is.na(Phase31_transferwide)] <- 0
+
+Phase31_transferwide <- Phase31_transferwide %>% 
+  mutate(ValidPC = Valid/(Valid+invalid),
+         InvalidPC = invalid/(Valid +invalid))
+
+Phase31_transferPC<- Phase31_transferwide %>% 
+  pivot_longer(cols = contains("PC"),
+    names_to = c("Validity"),
+    values_to = c("PC"))
+
+Phase31_transferPC <- Phase31_transferPC %>% 
+  mutate(Validity = str_remove(Validity, "PC"),
+         Validity = str_replace(Validity,"Invalid","invalid")) %>% select(-Valid,-invalid)
+
+#Phase31_TCagg <- left_join(Phase31_TCagg,Phase31_transferPC)
+
+transferRT_3.1 <- Phase31_TC %>% 
+  group_by(PROLIFIC_PID,Validity, Condition, .drop = FALSE) %>% 
+  summarise(RT = mean(FreeRT, na.rm=TRUE))
+
+Phase31_TCagg <- merge(Phase31_TCagg,transferRT_3.1, by = c("PROLIFIC_PID","Validity","Condition"))
+#write_csv(file = here("data","Phase31_TCagg.csv"),Phase31_TCagg)
+#write_csv(file = here("data","Phase31_TC_PC.csv"),Phase31_transferPC)
+```
+
+The participants are able to significantly perform better than chance when asked to guess what response would be needed after S1.
+
+```{r}
+Phase31_TCagg <- read_csv(here("data","Phase31_TCagg.csv"))
+Phase31_transferPC <- read_csv(here("data","Phase31_TC_PC.csv"))
+
+Phase31_TCS1_Validpc <- Phase31_transferPC %>% 
+  filter(Validity=="Valid")
+
+pander(t.test(Phase31_TCS1_Validpc$PC, mu = 0.5, alternative = "greater"), style = "rmarkdown", caption = "T test output for the S1-R Transfer Valid trials")
+
+```
+
+However, the difference between the RTs for the valid and invalid guess is not significantly different
+
+```{r}
+# rtcomp_TC <- aov_ez(data = Phase31_TCagg,
+#                     dv = "RT",
+#                     id = "PROLIFIC_PID",
+#                     within = "Validity")
+# nice(rtcomp_TC)
+```
+
+
+### Plots
+
+```{r fig.show='hold',out.width='50%'}
+mean31_TC_pc <- summarySEwithin(data = Phase31_transferPC,
+                                measurevar = "PC",
+                           withinvars = c("Validity","Condition"),
+                           idvar = "PROLIFIC_PID", 
+                           na.rm = TRUE, 
+                           conf.interval = 0.95)
+mean31_TC_pc <- mean31_TC_pc %>% filter(Validity=="Valid")
+#plots
+TC31_PC <- ggplot(mean31_TC_pc, aes(x = Condition,y = PC, fill = "midnightblue"))+
+  geom_bar(alpha = 0.75, stat = "identity", fun = "mean")+
+  geom_hline(yintercept = 0.50, linetype = "dashed")+
+  geom_errorbar(aes(ymin = PC - se,ymax = PC+ci),width = .2, size = 1,position = position_dodge(.9))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab(NULL)+
+  theme_classic()+
+  theme(text = element_text(size = 20, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18),
+        legend.position = "none")+
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+TC31_PC
+#ggsave(filename = "Phase3TC_PC.png",TC31_PC)
+
+mean31RT_tc <- summarySEwithin(data = Phase31_TCagg, measurevar = "RT",
+                           withinvars = c("Validity","Condition"), 
+                           idvar = "PROLIFIC_PID", 
+                           na.rm = TRUE, 
+                           conf.interval = 0.95)
+
+TC31_RT <- ggplot(mean31RT_tc, aes(x=Validity, y=RT,fill = Validity))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin = RT - ci, ymax =RT + ci),width = .2, size = 1,position = position_dodge(.9))+
+  #scale_fill_manual(values = c("midnightblue","skyblue"))+
+  coord_cartesian(ylim = c(500,700))+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  ylab("Reaction Time in ms")+xlab("Validity")+ # or labs(x = , y =)
+  theme_classic()+
+  facet_grid(.~Condition)+
+  theme(text = element_text(size = 20, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18),
+        legend.position = "none")+
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+TC31_RT
+#ggsave(filename = "Phase3_TC_RT.png",TC31_RT)
+```
+
+
+## Combined Phase 3 Plots
+
+```{r}
+Phase31_PCall <- rbind(Phase31_PC,Phase31_transferPC)
+Phase31_all_valid <- Phase31_PCall %>% filter(Validity=="Valid")
+
+Phase31_all_valid$Condition <- factor(Phase31_all_valid$Condition, levels = c("S2-R","S1-R Coloured","S1-R Transfer"))
+
+Phase31_all_valid <- Phase31_all_valid %>% 
+  mutate(Condition = recode(Condition,
+                 "S1-R Coloured" = "S1 Coloured-R",
+                 "S1-R Transfer" =  "S1 Transfer-R"))
+
+table(Phase31_all_valid$Condition)
+Phase3_PC <- ggplot(Phase31_all_valid, aes(x = Condition,y = PC, fill = "midnightblue"))+
+  geom_bar(alpha = 0.75, stat = "summary", fun = "mean")+
+  geom_hline(yintercept = 0.25, linetype = "dashed")+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab(NULL)+
+  theme_classic()+
+  theme(text = element_text(size = 20, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18),
+        legend.position = "none")+
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+
+Phase3_PC
+ggsave(filename = "Phase3_PC.png",Phase3_PC)
+
+
+Phase31_RT <- (MC31_RT+TC31_RT)&
+  plot_annotation(title = "Reaction Time of valid and invalid guesses")
+Phase31_RT[[2]] <- Phase31_RT[[2]]+ylab(NULL)
+Phase31_RT
+
+#ggsave(filename = "Phase3_RT.png",Phase31_RT)
+```
+### Figure 2 for Experiment ms
+
+```{r}
+Fig2 <- (Phase2Plot/Phase3_PC)+
+  plot_annotation(tag_levels = "A", title = "Experiment 2a")+
+  theme_classic()&
+  theme(text = element_text(size = 20, family = "Times"), 
+        axis.text.x = element_text(size = 18), 
+        axis.text.y = element_text(size = 18))&
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))
+Fig2[[2]] <- Fig2[[2]]+theme(legend.position = "none")
+
+Fig2
+ggsave(filename = here("figures","Figure2_ms.png"),width = 12,height = 10, Fig2)
+```
+
+
+### ANOVA
+
+```{r}
+Phase31_PCall <- rbind(Phase31_PC,Phase31_transferPC)
+
+Phase31_all_validPC <- Phase31_PCall %>% 
+  filter(Validity == "Valid")
+## comparing the effects against each other
+Ph31_PC <- aov_ez(data = Phase31_all_validPC,
+                    id = "PROLIFIC_PID",
+                    dv = "PC",
+                    within = "Condition")
+nice(Ph31_PC)
+c <- emmeans(Ph31_PC,"Condition")
+
+
+
+#contrast(c, method = list("S2+S1Coloured - S1Transfer"=(S1.R.Coloured+S2.R)-S1.R.Transfer))
+```
+
+## Phase 3.2
+
+### Forced CHoice Task
+
+```{r}
+Phase32_S2 <-  dataForced %>% 
+  filter(Phase == 3.2) %>% 
+  group_by(PROLIFIC_PID,Validity,Condition) %>% 
+  summarize(RT = mean(RT_io,na.rm = TRUE),
+            ER = mean(ER, na.rm = TRUE))
+
+aov2 <- aov_ez(data = Phase32_S2,
+               id = "PROLIFIC_PID",
+               dv = "RT",
+               within = c("Validity","Condition"),
+               anova_table = list(correction = "none",
+                                  es = "pes"))
+nice(aov2)
+
+pander(t.test(data = Phase32_S2, RT~Validity,alternative = "greater",subset = (Condition == "S2-R"), paired = TRUE), style = "rmarkdown", caption = "T test output for the S2-R Valid trials")
+
+pander(t.test(data = Phase32_S2, RT~Validity,alternative = "greater",subset = (Condition == "S1-R Coloured"), paired = TRUE), style = "rmarkdown", caption = "T test output for the Coloured S1-R Valid trials")
+
+#Error rate
+
+aov2er <- aov_ez(data = Phase32_S2,
+               id = "PROLIFIC_PID",
+               dv = "ER",
+               within = c("Validity","Condition"),
+               anova_table = list(correction = "none",
+                                  es = "pes"))
+nice(aov2er)
+
+pander(t.test(data = Phase32_S2,ER~Validity,alternative = "greater",subset = (Condition == "S2-R"), paired = TRUE), style = "rmarkdown", caption = "T test output for the S2-R Valid trials")
+
+pander(t.test(data = Phase32_S2, ER~Validity,alternative = "greater",subset = (Condition == "S1-R Coloured"), paired = TRUE), style = "rmarkdown", caption = "T test output for the Coloured S1-R Valid trials")
+
+write_csv(file = here("Data","Phase32_Forced.csv"),Phase32_S2)
+
+```
+
+### Free choice
+
+```{r}
+Phase32_TC <- dataFree %>% 
+  filter(Phase == "3.2") %>% 
+  filter(Condition == "S1-R Transfer")
+
+
+
+Phase32_TC <- Phase32_TC %>% 
+  mutate(FreeChoiceResp = str_remove_all(FreeChoiceResp,"[[:punct:]]"))
+
+table(Phase32_TC$FreeChoiceAccuracy,Phase32_TC$Condition)
+table(Phase32_TC$ChkFree, Phase32_TC$Condition)
+Phase32_TC <- Phase32_TC %>% 
+  mutate(Validity = ifelse(FreeChoiceResp == CorrectAnswer,"Valid",
+                           ifelse(FreeChoiceResp != CorrectAnswer,"invalid",NA)))
+
+#table(Phase32_TC$Validity)
+Phase32_TC$Condition <- as.factor(Phase32_TC$Condition)
+Phase32_TC$Validity <- as.factor(Phase32_TC$Validity)
+#similar processes done in MC analysis
+Phase32_TCagg <- Phase32_TC %>% 
+  group_by(PROLIFIC_PID,Condition,Validity, .drop = FALSE) %>% 
+  summarise(Freq = n())
+
+Phase32_transferwide <- Phase32_TCagg %>%  
+  pivot_wider(names_from = Validity,
+              values_from = Freq)
+Phase32_transferwide[is.na(Phase32_transferwide)] <- 0
+
+Phase32_transferwide <- Phase32_transferwide %>% 
+  mutate(ValidPC = Valid/(Valid+invalid),
+         InvalidPC = invalid/(Valid +invalid))
+
+Phase32_transferPC<- Phase32_transferwide %>% 
+  pivot_longer(cols = contains("PC"),
+    names_to = c("Validity"),
+    values_to = c("PC"))
+
+Phase32_transferPC <- Phase32_transferPC %>% 
+  mutate(Validity = str_remove(Validity, "PC"),
+         Validity = str_replace(Validity,"Invalid","invalid")) %>% select(-Valid,-invalid)
+
+#Phase32_TCagg <- left_join(Phase32_TCagg,Phase32_transferPC)
+
+transferRT_3.1 <- Phase32_TC %>% 
+  group_by(PROLIFIC_PID,Validity, Condition, .drop = FALSE) %>% 
+  summarise(RT = mean(FreeRT, na.rm=TRUE))
+
+Phase32_TCagg <- merge(Phase32_TCagg,transferRT_3.1, by = c("PROLIFIC_PID","Validity","Condition"))
+
+write_csv(file = here("Data","Phase32_TCagg.csv"),Phase32_TCagg)
+write_csv(file = here("Data","Phase32_TC_PC.csv"),Phase32_transferPC)
+
+Phase32_TCS1_Validpc <- Phase32_transferPC %>% 
+  filter(Validity=="Valid")
+
+pander(t.test(Phase32_TCS1_Validpc$PC, mu = 0.5, alternative = "greater"), style = "rmarkdown", caption = "T test output for the S1-R Transfer Valid trials")
+
+
+```
+
+
+## Additional Free Choice Analysis - Test for indirect retrieval 
+```{r}
+Phase3_IR <- dataFree %>% 
+  filter(Phase==3.1)
+Phase3_IR$RChoice <- NA
+Phase3_IR <- Phase3_IR %>% 
+  group_by(PROLIFIC_PID) %>% 
+  mutate(RChoice = ifelse(FreeChoiceResp=="d",1,RChoice)) ## 1 refers to response repetition
+table(Phase3_IR$RChoice)
+Phase3_IR <- Phase3_IR %>% 
+  group_by(PROLIFIC_PID) %>% 
+  mutate(RChoice = ifelse(FreeChoiceResp=="l"&is.na(RChoice)==TRUE,0,RChoice)) ## 0 means RC
+table(Phase3_IR$RChoice)
+
+Phase3_IR <- Phase3_IR %>% 
+  mutate(RChoice_s1 = ifelse(Condition == "S1-R Transfer",RChoice,NA))
+table(Phase3_IR$RChoice_s1)
+
+Phase3_IR <- Phase3_IR %>% 
+  mutate(Validity = ifelse(FreeChoiceResp==CorrectAnswer,1,
+                           ifelse(FreeChoiceResp!=CorrectAnswer,-1,NA)))
+## 1 refers to valid and -1 refers r invalid
+summary(Phase3_IR$Validity)
+
+table(Phase3_IR$RChoice_s1,Phase3_IR$Validity)
+Phase3_IR <- Phase3_IR %>% relocate(RChoice,RChoice_s1,Validity)
+
+## Last occurrence
+Phase3_IR$LastOcc <- NA
+
+Phase3_IR <- Phase3_IR %>% 
+  group_by(PROLIFIC_PID) %>% 
+  mutate(LastOcc = ifelse(((Stim1 == "Max" & lag(Stim2,1)=="neat")|(Stim1 == "Tim"&lag(Stim2,1)=="fair"))&is.na(LastOcc)==TRUE,1,LastOcc)) 
+
+table(Phase3_IR$LastOcc)
+
+lagvalue <- 2:25
+for (i in lagvalue) {
+Phase3_IR <- Phase3_IR %>% 
+  group_by(PROLIFIC_PID) %>% 
+  mutate(LastOcc = ifelse(((Stim1 == "Max" & lag(Stim2,i)=="neat")|(Stim1 == "Tim" & lag(Stim2,i)=="fair")) &is.na(LastOcc)==TRUE,i,LastOcc)) 
+}
+table(Phase3_IR$LastOcc)
+Phase3_IR <- Phase3_IR %>% relocate(LastOcc)
+
+##previous Response
+Phase3_IR$PreviousResp <- NA
+Phase3_IR <- Phase3_IR %>% 
+  group_by(PROLIFIC_PID) %>% 
+  mutate(PreviousResp = ifelse(lag(FreeChoiceResp,1) == FreeChoiceResp,1,
+         ifelse(lag(FreeChoiceResp,1) != FreeChoiceResp,2,PreviousResp)))
+table(Phase3_IR$RChoice,Phase3_IR$PreviousResp)
+
+
+
+```
+
+### 1. Model 1
+
+Validity x RRel
+
+```{r}
+model1 <- glmer(RChoice_s1~1+Validity + (1+Validity|PROLIFIC_PID), 
+                      data=Phase3_IR, 
+                      na.action = "na.omit", binomial)
+
+tab_model(model1, show.se = TRUE,show.stat = TRUE, show.ci = FALSE,show.aic = TRUE, show.loglik = TRUE, 
+                  dv.labels = "Error Rate")
+plot_model(model1,terms = "Validity",type = "pred")
+```
+### 2. Model 2 - with last occurence
+
+```{r}
+means.Distance<- aggregate(data = Phase3_IR, LastOcc ~ PROLIFIC_PID, mean)
+names(means.Distance)[2]<-"Distance_mean"
+  
+Phase3_IR<-merge (Phase3_IR, means.Distance, by="PROLIFIC_PID")
+Phase3_IR$Distance_cwp <- Phase3_IR$LastOcc-Phase3_IR$Distance_mean
+summary(Phase3_IR$Distance_cwp)
+
+means.previous_rm <- aggregate(data = Phase3_IR, PreviousResp ~ PROLIFIC_PID, mean)
+names(means.previous_rm)[2]<-"previous_rm_mean"
+Phase3_IR<-merge(Phase3_IR, means.previous_rm, by="PROLIFIC_PID")
+Phase3_IR$previous_rm_cwp <- Phase3_IR$PreviousResp-Phase3_IR$previous_rm_mean
+summary(Phase3_IR$previous_rm_cwp)
+
+model2 <- glmer(RChoice_s1~1+Validity+(Distance_cwp*previous_rm_cwp) + (1+Validity+(Distance_cwp*previous_rm_cwp)|PROLIFIC_PID),
+                      data=Phase3_IR, 
+                      na.action = "na.omit", binomial)
+tab_model(model2, show.se = TRUE,show.stat = TRUE, show.ci = FALSE,show.aic = TRUE, show.loglik = TRUE, 
+                  dv.labels = "Response Choice")
+plot_model(model2,type = "pred",terms = c("Validity","previous_rm_cwp[minmax]","Distance_cwp[minmax]"))
+```
+
+```{r}
+#anova(model1,model2)
+```
+
+### Model 3
+
+```{r}
+model3 <- glmer(RChoice_s1~1+Validity*Distance_cwp*previous_rm_cwp + (1+Validity*Distance_cwp*previous_rm_cwp|PROLIFIC_PID),
+                      data=Phase3_IR, 
+                      na.action = "na.omit", binomial)
+tab_model(model3, show.se = TRUE,show.stat = TRUE, show.ci = FALSE,show.aic = TRUE, show.loglik = TRUE, 
+                  dv.labels = "Response Choice")
+plot_model(model2,type = "pred",terms = c("Validity","previous_rm_cwp[minmax]","Distance_cwp[minmax]"))
+```
+
+
+## Influence of Awareness
+
+```{r}
+dataAware <- read_csv(here("data","Exp5Awareness.csv"))
+
+AwareSummary <- dataAware %>% 
+  group_by(PROLIFIC_PID,AwarenessType) %>% 
+  summarise(TotalAccuracy = sum(awarenext.corr, na.rm = TRUE))
+
+attach(AwareSummary)
+kable(table(AwarenessType,TotalAccuracy),
+      format = "html",
+      caption = "Acccuracy Score per Type of Awareness Questionnaire")
+
+## participants with awareness in the SS cued recall task
+which(AwarenessType == "S-S Cued Recall" & TotalAccuracy >= 3, useNames = TRUE) -> SS_CR_aware
+SS_CR_aware <- AwareSummary$PROLIFIC_PID[SS_CR_aware]
+
+## participants awareness from S1-R transfer
+S1_Q_aware <- which(AwarenessType == "S1-R Transfer Awareness" & TotalAccuracy >=1, useNames = TRUE)
+S1_Q_aware <- AwareSummary$PROLIFIC_PID[S1_Q_aware]
+
+
+## participants awareness of S2-R contingency
+S2_Q_aware <- which(AwarenessType == "S2-R Contingency" & TotalAccuracy >= 3, useNames = TRUE)
+S2_Q_aware <- AwareSummary$PROLIFIC_PID[S2_Q_aware]
+
+#participants with S1-R coloured awareness
+S1C_Q_aware <- which(AwarenessType=="S1-R Contingency" & TotalAccuracy>=1, useNames = TRUE)
+S1C_Q_aware <-AwareSummary$PROLIFIC_PID[S1C_Q_aware]
+detach(AwareSummary)
+
+Phase31TC_Awareness <- Phase31_transferPC %>% 
+  mutate(SSCRAwareness = ifelse(PROLIFIC_PID %in% SS_CR_aware, "Aware","Unaware"),
+         S1TRAwareness = ifelse(PROLIFIC_PID %in% S1_Q_aware, "Transferred","Not transferred"),
+         S1CRAwareness = ifelse(PROLIFIC_PID %in% S1C_Q_aware, "Aware","Unaware"),
+         S2Awareness = ifelse(PROLIFIC_PID %in% S2_Q_aware, "Aware","Unaware"))
+Phase31TC_Awareness$S1TRAwareness <- factor(Phase31TC_Awareness$S1TRAwareness, levels = c("Transferred", "Not transferred"))
+```
+
+
+### Plots showing the trends of the transfer per awareness
+
+```{r}
+Phase31_validPC_Awareness <- Phase31TC_Awareness %>% 
+  filter(Validity == "Valid")
+
+ss <- ggplot(Phase31_validPC_Awareness, aes(x = SSCRAwareness,y = PC, fill = SSCRAwareness))+
+  geom_bar(alpha = 0.75, stat = "summary", fun = "mean")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab("S-S Cued Recall")+
+  theme_classic()+
+  theme(text = element_text(size = 18),
+        legend.position = "none")
+
+s1c <- ggplot(Phase31_validPC_Awareness, aes(x = S1CRAwareness,y = PC, fill = S1CRAwareness))+
+  geom_bar(alpha = 0.75, stat = "summary", fun = "mean")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab("S1-R Coloured")+
+  theme_classic()+
+  theme(text = element_text(size = 18),
+        legend.position = "none")
+
+s1t <- ggplot(Phase31_validPC_Awareness, aes(x = S1TRAwareness,y = PC, fill = S1TRAwareness))+
+  geom_bar(alpha = 0.75, stat = "summary", fun = "mean")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab("S1-R Transfer")+
+  theme_classic()+
+  theme(text = element_text(size = 18),
+        legend.position = "none")
+s2 <- ggplot(Phase31_validPC_Awareness, aes(x = S2Awareness,y = PC, fill = S2Awareness))+
+  geom_bar(alpha = 0.75, stat = "summary", fun = "mean")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  scale_fill_manual(values = c("#00241b","#4e878c"))+
+  #scale_fill_paletteer_d(`"beyonce::X2"`)+
+  coord_cartesian(ylim = c(0,1))+
+  ylab("Proportion of valid keypress")+
+  xlab("S2-R Contingency")+
+  theme_classic()+
+  theme(text = element_text(size = 18),
+        legend.position = "none")
+
+awareplot <- (ss+s1c+s2+s1t)+
+  plot_annotation(tag_levels = "A", title = "Proportion of responses per Awareness")+
+  plot_layout(guides = "collect", nrow = 1)&theme(text = element_text(size = 15), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 12),
+        legend.position = "none") +
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),# if you want a plain background to copy to ppts
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent", colour = NA))&
+  ylab("Proportion of valid keypresses")
+awareplot[[2]] <- awareplot[[2]] + ylab(NULL)
+awareplot[[3]] <- awareplot[[3]] + ylab(NULL)
+awareplot[[4]] <- awareplot[[4]] + ylab(NULL)
+
+awareplot
+
+#ggsave(filename = "Awareness_abovechanceaccurate.png",awareplot,width = 18, height = 10)
+```
+
+
+### Tests of significance among the awareness data
+
+```{r eval=FALSE}
+
+Phase31TC_Awareness <- Phase31TC_Awareness %>% 
+  filter(Validity == "Valid")
+
+pander(t.test(data = Phase31TC_Awareness, PC~S1TRAwareness),style = "rmarkdown",caption = "Difference between aware and unaware - S1 Transfer Awarness")
+s1traware <- Phase31TC_Awareness %>% filter(S1TRAwareness == "Transferred")
+pander(t.test(s1traware$PC, mu=0.5),style = "rmarkdown",caption = "Valid proportion - S1TRansfer")
+
+
+pander(t.test(data = Phase31TC_Awareness, PC~S2Awareness),style = "rmarkdown",caption = "Difference between aware and unaware - S2-R Awarness")
+s2raware <- Phase31TC_Awareness %>% filter(S2Awareness == "Aware")
+pander(t.test(s2raware$PC, mu=0.5, alternative = "greater"),style = "rmarkdown",caption = "Valid proportion - S2RTransfer")
+
+
+pander(t.test(data = Phase31TC_Awareness, PC~S1CRAwareness),style = "rmarkdown",caption = "Difference between aware and unaware - S1-R Awarness")
+
+pander(t.test(data = Phase31TC_Awareness, PC~SSCRAwareness),style = "rmarkdown",caption = "Difference between aware and unaware - S-s Awarness")
+
+```
+
+
+
+## Binding Analyses
+
+
+### 1. Prime-Probe S2 sequences
+
+```{r eval=FALSE}
+Phase32_S2 <- read_csv(here("data","Phase32_S2s.csv"))
+
+table(Phase32$TrialType)
+table(Phase32$Condition)
+Phase32_S2 <- Phase32_S2 %>% 
+  filter(TrialType == "Prime"|TrialType == "Probe")
+Phase32_S2$RRel <- NA
+Phase32_S2 <- Phase32_S2 %>% 
+  mutate(RRel = ifelse(Response.keys == lag(Response.keys,1),"RR",RRel))
+
+Phase32_S2 <- Phase32_S2 %>% 
+  mutate(RRel = ifelse(Response.keys != lag(Response.keys,1) & is.na(RRel)==TRUE,"RC",RRel))
+table(Phase32_S2$RRel)
+
+Phase32_S2$SRel <- NA
+
+Phase32_S2 <- Phase32_S2 %>% 
+  mutate(SRel = ifelse(Stim2 == lag(Stim2,1),"SR",SRel))
+
+Phase32_S2 <- Phase32_S2 %>% 
+  mutate(SRel = ifelse(Stim2 != lag(Stim2,1) & is.na(SRel)==TRUE,"SC",SRel))
+table(Phase32_S2$SRel)
+
+Phase32_S2 <- Phase32_S2 %>% relocate(SRel,RRel,Colour)
+table(Phase32$Stim2,Phase32$Colour,Phase32$PROLIFIC_PID)
+Phase32_S2 <- Phase32_S2 %>% 
+  filter(ACC_trials==1)
+table(Phase32_S2$SRel,Phase32_S2$RRel)
+
+
+## create an agg file
+Phase32_S2_agg <- Phase32_S2 %>% 
+  group_by(PROLIFIC_PID,SRel,RRel) %>% 
+  summarise(RT = mean(AllRT,na.rm=TRUE)) %>% drop_na()
+
+
+ggplot(Phase32_S2_agg, aes(x=RRel,y=RT, color = SRel, fill = SRel))+
+  geom_line(aes(group=SRel, linetype = SRel), size = 1, stat="summary", fun = "mean")+
+  geom_point(aes(shape = SRel), size = 3, stat = "summary", fun = "mean")+
+  labs(x="Response Relation", 
+       y = "Reaction Time", 
+       color = "Stimulus Relation", 
+       fill = "Stimulus Relation",
+       linetype = "Stimulus Relation", 
+       shape = "Stimulus Relation")+
+  theme_classic()+
+  coord_cartesian(ylim = c(400,500))+
+  scale_color_paletteer_d(`"beyonce::X3"`)+
+  scale_fill_paletteer_d(`"beyonce::X3"`)+
+  theme(text = element_text(size = 18, family = "Times"))
+  #scale_color_manual(values = c("#6E9887","#A4D4B4","#073B3A","#B2B09B"))
+
+```
+
+#### ANOVA
+
+There is no significant interaction between Srel x RRel. The trend also seems to favour SC RR rather SRRR. This could also be due to the fact that there are hardly any SRRR entries (66 in the entire dataset)
+
+```{r eval=FALSE}
+s2binding <- aov_ez(data = Phase32_S2_agg,
+                    id = "PROLIFIC_PID",
+                    dv = "RT",
+                    within = c("SRel","RRel"))
+nice(s2binding)
+```
+
+#### Multi level model
+
+```{r eval=FALSE}
+mlm_s2 <- Phase32_S2
+mlm_s2 <- mlm_s2 %>% 
+  mutate(previous_rm  = ifelse(RRel == "RR",1,2),
+         Stim_rm = ifelse(SRel == "SR",1,2))
+
+means.previous_rm <- aggregate(data = mlm_s2, previous_rm ~ PROLIFIC_PID, mean)
+
+names(means.previous_rm)[2]<-"previous_rm_mean"
+  
+mlm_s2<-merge (mlm_s2, means.previous_rm, by="PROLIFIC_PID")
+  
+mlm_s2$previous_rm_cwp <- mlm_s2$previous_rm-mlm_s2$previous_rm_mean
+summary(mlm_s2$previous_rm_cwp)
+
+
+model0 <- lmer(AllRT~1+SRel*RRel + (1+SRel*RRel|PROLIFIC_PID), 
+                      data=mlm_s2, 
+                      REML=F,
+                      na.action = "na.omit")
+tab_model(model0, show.se = TRUE,show.stat = TRUE, show.ci = FALSE,show.aic = TRUE, show.loglik = TRUE, 
+                  dv.labels = "Reaction Time")
+
+plot_model(model0, type = "pred", terms = c("RRel","SRel"))
+
+```
+
+
+### 2. Prime-Probe with S1-Transfer as Probes
+
+```{r eval=FALSE}
+
+Phase32all <- read_csv(here("data","Phase32_combined.csv"))
+
+Phase32_SRB <- Phase32all %>% 
+  filter(TrialType == "Prime" | TrialType == "Probe")
+
+table(Phase32_SRB$TrialType,Phase32_SRB$ACC_trials)
+# There are 67 trials where prime was incorrect
+Phase32_SRB <- Phase32_SRB %>% 
+  mutate(PrimeAcc = case_when(TrialType=="Prime"&ACC_trials==0~"Incorrect Prime"))
+Phase32_SRB <- Phase32_SRB %>% 
+  mutate(PrimeAcc = ifelse(TrialType=="Probe"&lag(PrimeAcc,1)=="Incorrect Prime","Invalid Probe",PrimeAcc))
+
+#table(Phase32_SRB$PrimeAcc)
+
+#removing unusable PRime-Probe sequences
+Phase32_SRB <- Phase32_SRB %>% 
+  filter(is.na(PrimeAcc)==TRUE)
+
+#ResponseRelation
+Phase32_SRB <- Phase32_SRB %>% 
+  mutate(RGuess = ifelse((TrialType=="Probe" & Response.keys==lag(Response.keys,1)),"RR",
+                       ifelse((TrialType == "Probe" & Response.keys != lag(Response.keys,1)),"RC",NA)))
+#table(Phase32_SRB$Condition)
+
+Phase32_SRB <- Phase32_SRB %>% 
+  mutate(SRel = ifelse(TrialType=="Probe"& ((Stim1 == "Tim" & lag(Stim2,1)=="fair") | (Stim1=="Max" & lag(Stim2,1)=="neat")),"Associated",
+                    ifelse(TrialType=="Probe"& ((Stim1 == "Tim" & lag(Stim2,1)=="neat") | (Stim1=="Max" & (lag(Stim2,1)=="fair"))),"Not Associated",NA)))
+
+
+Phase32_SRBmlm <- Phase32_SRB %>% relocate(RGuess,SRel) %>% 
+  filter(SRel == "Associated"|SRel == "Not Associated")
+
+Phase32_SRBmlm <- Phase32_SRBmlm %>% 
+  mutate(RGuess_dicho = ifelse(RGuess=="RR",1,
+         ifelse(RGuess == "RC",0,RGuess)))
+table(Phase32_SRBmlm$RGuess,Phase32_SRBmlm$RGuess_dicho)
+
+
+## finding the number of Trials
+SRBTrialscount <- Phase32_SRB %>% group_by(PROLIFIC_PID) %>% filter(TrialType=="Probe") %>% count()
+
+SRBtrialPerSRel <- Phase32_SRB %>% 
+  group_by(PROLIFIC_PID,SRel) %>% 
+  filter(TrialType=="Probe") %>% 
+  count() %>% 
+  drop_na(SRel)
+
+SRBSRel_wide <- SRBtrialPerSRel %>% 
+  pivot_wider(id_cols = PROLIFIC_PID,
+              names_from = SRel,
+              values_from = n)
+
+Phase32_PC <- Phase32_SRB %>% 
+  group_by(PROLIFIC_PID,SRel,RGuess, .drop = FALSE) %>% 
+  summarise(Freq = n(),
+            RT = mean(AllRT,na.rm = TRUE)) %>% drop_na(SRel)
+
+Phase32_wide <- Phase32_PC %>% 
+  pivot_wider(id_cols = PROLIFIC_PID,
+              names_from = c("RGuess","SRel"),
+              names_sep = "_",
+              values_from = Freq)
+
+Phase32_wide <- left_join(Phase32_wide,SRBSRel_wide)
+
+Phase32_wide <- Phase32_wide %>% 
+  mutate(RC_Not_perc = (`RC_Not Associated`/`Not Associated`)*100,
+         RR_Not_perc = (`RR_Not Associated`/`Not Associated`)*100,
+         RR_A_perc = (`RR_Associated`/Associated)*100,
+         RC_A_perc = (RC_Associated/Associated)*100)
+
+Phase32_long <- Phase32_wide %>% 
+  pivot_longer(cols = contains("perc"),
+               names_to = c("RGuess","SRel"),
+               names_sep = "_",
+               values_to = "Perc")
+
+Phase32_long <- Phase32_long %>% 
+  mutate(SRel = recode(SRel, Not = "Not Associated",
+                             A = "Associated"))
+
+Phase32_dv <- left_join(Phase32_PC,Phase32_long)
+Phase32_dv<-Phase32_dv %>% 
+  select(PROLIFIC_PID,RGuess,SRel,Freq,RT,Perc)
+  
+RespRepeat <- Phase32_dv %>% filter(RGuess == "RR")
+
+
+SRBPlot_F <- ggplot(RespRepeat, aes(x=SRel,y=Perc, color = SRel, fill = SRel))+
+  geom_line(aes(group=1), size = 1, stat="summary", fun = "mean")+
+  geom_point(aes(shape = SRel), size = 3, stat = "summary", fun = "mean")+
+  labs(x="Stimulus Relation", 
+       y = "Frequency % of \n Guessing previous response", 
+       color = "Stimulus Relation", 
+       fill = "Stimulus Relation",
+       linetype = "Stimulus Relation", 
+       shape = "Stimulus Relation")+
+  theme_classic()+
+  coord_cartesian(ylim = c(50,60))+
+  scale_color_paletteer_d(`"beyonce::X3"`)+
+  scale_fill_paletteer_d(`"beyonce::X3"`)+
+  theme(text = element_text(size = 18, family = "Times"))
+  #scale_color_manual(values = c("#6E9887","#A4D4B4","#073B3A","#B2B09B"))
+SRBPlot_F
+
+SRBPlot_RT <- ggplot(RespRepeat,aes(x=SRel,y=RT, fill = SRel,color = SRel))+
+  geom_bar(stat = "summary", fun = "mean", aes(fill = SRel,color = SRel))+
+  #geom_line(aes(group=1), size = 1, stat="summary", fun = "mean")+
+  #geom_point(aes(shape = SRel), size = 3, stat = "summary", fun = "mean")+
+  labs(x="Stimulus Relation",
+       y = "Reaction Time",
+       color = "Stimulus Relation",
+       fill = "Stimulus Relation", 
+       linetype = "Stimulus Relation",
+       shape = "Stimulus Relation")+
+  theme_classic()+
+  scale_fill_paletteer_d(`"beyonce::X2"`)+
+  scale_color_paletteer_d(`"beyonce::X2"`)+
+  coord_cartesian(ylim = c(550,700))+
+  theme(text = element_text(size = 18,family = "Times"))
+  #scale_color_manual(values = c("#6E9887","#A4D4B4","#073B3A","#B2B09B"))
+SRBPlot_RT
+
+```
+
+#### ANOVAs
+
+There is no significant difference between the Response repetitions in S1-R transfer for associated and not associated primes (Trend is in the right direction)
+
+Similar result wsa obtained while comapring the RTs of the free choice probes when it was an associated prime vs a not associated prime.
+
+```{r eval=FALSE}
+RespRepeat$SRel <- as.factor(RespRepeat$SRel)
+Ph32_Perc <- aov_ez(data = RespRepeat,
+                    id = "PROLIFIC_PID",
+                    dv = "Perc",
+                    within = "SRel")
+nice(Ph32_Perc)
+emmeans(Ph32_Perc,"SRel", contr = "pairwise")
+
+Ph32_RT <- aov_ez(data = RespRepeat,
+                    id = "PROLIFIC_PID",
+                    dv = "RT",
+                    within = "SRel")
+
+nice(Ph32_RT)
+emmeans(Ph32_RT,"SRel", contr = "pairwise")
+```
+

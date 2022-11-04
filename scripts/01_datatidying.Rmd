@@ -1,0 +1,269 @@
+---
+title: "Data Preparation and Cleaning"
+author: "Mrudula Arunkumar"
+date: "02/06/2022"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(plyr)
+library(tidyverse)
+library(rmarkdown)
+library(pander)
+library(here)
+library(knitr)
+library(rmarkdown)
+here::here()
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = F)
+#set_here()
+```
+
+
+
+```{r}
+#reading the file from the merged data
+data <- read_csv(here("Data", "Rawdata_Exp5.csv"))
+
+#removing unnecessary columns
+data <- data %>% 
+  select(-contains("Consent"),
+         -contains("Proceed"),
+         -contains("MicRepeat"),
+         -contains("Move"),
+         -starts_with("AttentionTask2"),
+         -contains("Attn"),
+         -contains("Inst"),
+         -contains("Prac"))
+
+
+
+#RTprep
+#### Prepare RTs
+
+data <- data %>% 
+  separate(Response.rt, into = c("RT_main", "RT_secondary"), sep = ',')
+
+data$RT_main <- data$RT_main %>% 
+  str_replace_all("\\[|\\]","") %>% 
+  as.double(data$RT_main)
+# converting to ms
+data$RT_main <- 1000*(data$RT_main)
+
+
+## splitting into forced and free rt
+data <- data %>% 
+  mutate(ForcedRT = ifelse(ChoiceType == "Forced", RT_main,NA),
+         FreeRT = ifelse(ChoiceType == "Free", RT_main,NA))
+
+data %>% group_by(Phase) %>% count(is.na(ForcedRT)) %>% 
+  kable(caption = "Forced Trials total")
+
+#renaming the Forced choice accuracy to ACC trials as for Free choice it does not apply
+data <- data %>% 
+  mutate(ACC_trials = ForcedChoiceAccuracy)
+
+# creating Error Rate column
+# checking the Error rate
+data <- data %>% 
+  mutate(ER = 1-ACC_trials)
+
+data <- data %>% 
+  mutate(ForcedRT = ifelse(ER == 1,NA,ForcedRT),
+         FreeRT = ifelse(ER == 1,NA,FreeRT))
+
+
+# this function is used to move all the columns to the front
+
+data <-  data %>% relocate(Phase,Condition,ChoiceType,Stim1,Stim2,ACC_trials,ER,ForcedRT,FreeRT,Response.corr,Response.keys,CorrectAnswer)
+```
+
+
+## Overall aggregate data to detemine the approved participants
+
+```{r}
+dataAgg <- data %>% 
+  group_by(PROLIFIC_PID) %>%
+  filter(ChoiceType == "Forced") %>% 
+  summarise(Errors = mean(ER, na.rm = TRUE),
+            ReactionTime = mean(ForcedRT, na.rm = TRUE)) %>% arrange(desc(Errors))
+
+
+BonusData <- data %>% 
+  select(PROLIFIC_PID,FreeGuessAcc,BonusPayment) %>% distinct() %>% drop_na()
+
+Agg_Bonus <- merge(dataAgg,BonusData)
+
+write_csv(file = here("Data", "DataSummaryForProlific.csv"),Agg_Bonus)
+
+## remove any participants if needed
+
+```
+
+
+## Creating the dataframe for Awareness Analysis
+
+```{r}
+#creating awareness data
+dataAware <- data %>% 
+  select(contains("Aware"),
+         contains("awarenext"),
+         contains("PROLIFIC_PID"),
+         contains("GuessResp"),
+         QuizAccuracy,
+         starts_with("Option"),
+         Answer,
+         Question,
+         Stim1) %>% 
+  distinct() %>% 
+  drop_na(Question) %>% 
+  relocate(PROLIFIC_PID, AwarenessType,Question,Answer,awarenext.corr,QuizAccuracy)
+
+dataAware <- dataAware %>% 
+  mutate(CorrectStim2 = case_when(Stim1=="Jack"~"bold",
+                                  Stim1=="Tim"~"fair",
+                                  Stim1=="Max"~"neat",
+                                  Stim1=="Ron"~"calm"))
+
+dataAware <- dataAware %>% 
+  mutate(Answer = case_when(CorrectStim2==Option1~"1",
+                            CorrectStim2==Option2~"2",
+                            CorrectStim2==Option3~"3",
+                            TRUE~Answer))
+
+dataAware<-dataAware %>% 
+  mutate(awarenext.corr = case_when(GuessResp.keys==Answer~1,
+                                    TRUE~awarenext.corr))
+dataAware <- dataAware %>% 
+  mutate(AwarenessType = ifelse(is.na(AwarenessType==TRUE),"S-S Cued Recall",AwarenessType)) %>% 
+  mutate(awarenext.corr = ifelse(AwarenessType=="S-S Cued Recall" & is.na(awarenext.corr==TRUE),0,awarenext.corr))
+
+#write_csv(file = here("data", "Exp5Awareness.csv"),dataAware)
+```
+
+## Further tidying
+
+```{r}
+#removing rows without RTs - breaks,pauses etc
+data <- data %>% drop_na(RT_main)
+
+#removing practice
+data <- data %>% 
+  filter(Phase != "Practice")
+
+#write_csv(file = here("data", "Expfulldata_tidy.csv"),data)
+
+```
+
+## OUtliers and Exclusions
+
+```{r}
+#creating two dataframes for free and forced choice
+dataForced <- data %>% 
+  filter(ChoiceType == "Forced")
+
+
+#creating function to remove the outliers and farouts
+computeTukeys <- function(x){
+  P25 <- quantile(x$RT_main, .25, na.rm = TRUE, type = 6) #type = 6 -> used in SPSS
+  P75 <- quantile(x$RT_main, .75, na.rm = TRUE, type = 6)
+  x$Outlier <- P75 + 1.5*(P75 - P25)
+  x$Farouts <- P75 + 3.0*(P75 - P25)
+  return(x)
+}
+
+#identifying outliers in the forced data set and removing the RTs
+dataForced <- ddply(dataForced, .(PROLIFIC_PID), computeTukeys)
+dataForced <- dataForced %>% 
+  mutate(RT_io = ForcedRT) %>% 
+  mutate(RT_io = ifelse((RT_io > Outlier | RT_io < 150),NA,RT_io))
+
+dataForced %>% group_by(Phase) %>% count(is.na(RT_io),ER) %>% kable(caption = "ForcedRT after removing errors")
+
+##saving the data frames
+write_csv(file = here("Data","ExpForcedData.csv"),dataForced)
+
+```
+
+
+
+## Cleaning up Free data
+
+```{r}
+#identifying outliers in the free data set
+dataFree <- data %>% 
+  filter(ChoiceType == "Free")
+
+
+dataFree <- ddply(dataFree, .(PROLIFIC_PID), computeTukeys)
+dataFree <- dataFree %>% 
+  mutate(RT_io = FreeRT) %>% 
+  mutate(RT_io = ifelse((RT_io > Outlier | RT_io < 150),NA,RT_io))
+
+dataFree <- dataFree %>% 
+  mutate(FreeChoiceResp = Response.keys) %>% 
+  select(-ForcedRT,-ER,-ACC_trials,
+        -starts_with("Phase1"),
+        -starts_with("Phase2."),
+        -starts_with("Headstart"),
+        -starts_with("Awareness."),
+        -ForcedChoiceAccuracy) %>% 
+  relocate(Stim1,Stim2,Validity,CorrectAnswer,FreeChoiceResp,Response.keys,FreeChoiceAccuracy,FreeRT)
+
+
+#changing the value of Freechoice keys without the punctuations and brackets
+dataFree <- dataFree %>% 
+  mutate(FreeChoiceResp = str_remove_all(FreeChoiceResp,"[[:punct:]]")) %>% 
+  filter(FreeChoiceResp == "d"||FreeChoiceResp=="l")
+
+
+dataFree <- dataFree %>% 
+  mutate(ChkFree = ifelse(FreeChoiceResp == CorrectAnswer,1,0)) %>% relocate(ChkFree)
+
+table(dataFree$Chkfree)
+table(dataFree$FreeChoiceAccuracy)
+
+write_csv(file = here("data", "ExpFreeData.csv"),dataFree)
+```
+
+## Finding the Response Proportion and see if participants follow any strategic alternating pattern
+
+```{r}
+#only for Phase 3.1 which was a complete free choice block
+ResponseProportion <- dataFree %>%
+  group_by(PROLIFIC_PID) %>% 
+  filter(Phase==3.1) %>% 
+  filter(FreeChoiceResp == "d"|FreeChoiceResp == "l") %>% 
+  count(FreeChoiceResp)
+## Total free choice trials in Phase 3.1 is 80, so equally each key should be pressed 20 times
+
+ResponseProportion <- ResponseProportion %>% 
+  pivot_wider(id_cols = PROLIFIC_PID,
+              names_from = FreeChoiceResp,
+              values_from = n)
+# to check if anyone had a tendency to press only one key
+ResponseProportion <- ResponseProportion %>% 
+  mutate(d_percent = (d/(d+l))*100,
+         l_percent = (l/(d+l))*100)
+
+```
+
+
+## binding
+
+```{r}
+Phase32 <- read_csv(here("data","Expfulldata_tidy.csv"))
+Phase32 <- Phase32 %>% 
+  filter(Phase==3.2)
+Phase32$TrialType <- NA
+Phase32 <- Phase32 %>% 
+  mutate(TrialType = ifelse(Condition=="S2-R"&lag(Condition,1)=="S2-R","Probe",TrialType)) %>% relocate(TrialType)
+Phase32 <- Phase32 %>% 
+  mutate(TrialType = ifelse(Condition=="S2-R"&lead(Condition,1)=="S2-R"&is.na(TrialType)==TRUE,"Prime",TrialType))
+
+Phase32 <- Phase32 %>% 
+  mutate(AllRT = coalesce(FreeRT,ForcedRT)) %>% relocate(TrialType,AllRT,FreeRT,ForcedRT)
+
+write_csv(file = here("data","Phase32_S2s.csv"),Phase32)
+```
+

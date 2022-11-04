@@ -1,0 +1,285 @@
+PROLIFIC_PID,Condition,Validity,PC
+5638e8a444e8c8000ee86a35,S1-R Coloured,Valid,1
+5638e8a444e8c8000ee86a35,S1-R Coloured,invalid,0
+5638e8a444e8c8000ee86a35,S2-R,Valid,0.875
+5638e8a444e8c8000ee86a35,S2-R,invalid,0.125
+56a8bb427f2472000b9522f6,S1-R Coloured,Valid,0.65
+56a8bb427f2472000b9522f6,S1-R Coloured,invalid,0.35
+56a8bb427f2472000b9522f6,S2-R,Valid,0.575
+56a8bb427f2472000b9522f6,S2-R,invalid,0.425
+580decae240a2d0001e6bab3,S1-R Coloured,Valid,0.75
+580decae240a2d0001e6bab3,S1-R Coloured,invalid,0.25
+580decae240a2d0001e6bab3,S2-R,Valid,0.725
+580decae240a2d0001e6bab3,S2-R,invalid,0.275
+59e1e3a23e4b5a00016a9c17,S1-R Coloured,Valid,0.85
+59e1e3a23e4b5a00016a9c17,S1-R Coloured,invalid,0.15
+59e1e3a23e4b5a00016a9c17,S2-R,Valid,0.925
+59e1e3a23e4b5a00016a9c17,S2-R,invalid,0.075
+5aeb063b2f05b500013028a0,S1-R Coloured,Valid,0.65
+5aeb063b2f05b500013028a0,S1-R Coloured,invalid,0.35
+5aeb063b2f05b500013028a0,S2-R,Valid,0.35
+5aeb063b2f05b500013028a0,S2-R,invalid,0.65
+5b2870cf7f78160001465bf9,S1-R Coloured,Valid,0.5
+5b2870cf7f78160001465bf9,S1-R Coloured,invalid,0.5
+5b2870cf7f78160001465bf9,S2-R,Valid,0.45
+5b2870cf7f78160001465bf9,S2-R,invalid,0.55
+5b985404a15058000124e508,S1-R Coloured,Valid,0.4
+5b985404a15058000124e508,S1-R Coloured,invalid,0.6
+5b985404a15058000124e508,S2-R,Valid,0.625
+5b985404a15058000124e508,S2-R,invalid,0.375
+5bc9e924e642db0001d3a1c5,S1-R Coloured,Valid,1
+5bc9e924e642db0001d3a1c5,S1-R Coloured,invalid,0
+5bc9e924e642db0001d3a1c5,S2-R,Valid,0.775
+5bc9e924e642db0001d3a1c5,S2-R,invalid,0.225
+5c1942e200849900010afdcd,S1-R Coloured,Valid,0.45
+5c1942e200849900010afdcd,S1-R Coloured,invalid,0.55
+5c1942e200849900010afdcd,S2-R,Valid,0.675
+5c1942e200849900010afdcd,S2-R,invalid,0.325
+5c4d1a6c9ce35100019dbc88,S1-R Coloured,Valid,0.8
+5c4d1a6c9ce35100019dbc88,S1-R Coloured,invalid,0.2
+5c4d1a6c9ce35100019dbc88,S2-R,Valid,0.75
+5c4d1a6c9ce35100019dbc88,S2-R,invalid,0.25
+5cfc7489e289a80016b6e29f,S1-R Coloured,Valid,0.4
+5cfc7489e289a80016b6e29f,S1-R Coloured,invalid,0.6
+5cfc7489e289a80016b6e29f,S2-R,Valid,0.45
+5cfc7489e289a80016b6e29f,S2-R,invalid,0.55
+5d35989e71b4880017d5cc81,S1-R Coloured,Valid,1
+5d35989e71b4880017d5cc81,S1-R Coloured,invalid,0
+5d35989e71b4880017d5cc81,S2-R,Valid,0.95
+5d35989e71b4880017d5cc81,S2-R,invalid,0.05
+5da6139c002c29001335b5a2,S1-R Coloured,Valid,0.5
+5da6139c002c29001335b5a2,S1-R Coloured,invalid,0.5
+5da6139c002c29001335b5a2,S2-R,Valid,0.525
+5da6139c002c29001335b5a2,S2-R,invalid,0.475
+5de7ccc24b7cf973d7b05bfb,S1-R Coloured,Valid,0.65
+5de7ccc24b7cf973d7b05bfb,S1-R Coloured,invalid,0.35
+5de7ccc24b7cf973d7b05bfb,S2-R,Valid,0.375
+5de7ccc24b7cf973d7b05bfb,S2-R,invalid,0.625
+5e7f514bb18cb4000a68310d,S1-R Coloured,Valid,0.15
+5e7f514bb18cb4000a68310d,S1-R Coloured,invalid,0.85
+5e7f514bb18cb4000a68310d,S2-R,Valid,0.875
+5e7f514bb18cb4000a68310d,S2-R,invalid,0.125
+5e8b89d0afcb1606e761ef7f,S1-R Coloured,Valid,0.85
+5e8b89d0afcb1606e761ef7f,S1-R Coloured,invalid,0.15
+5e8b89d0afcb1606e761ef7f,S2-R,Valid,0.775
+5e8b89d0afcb1606e761ef7f,S2-R,invalid,0.225
+5e92178e8ee4fe54b65b7c39,S1-R Coloured,Valid,0.8
+5e92178e8ee4fe54b65b7c39,S1-R Coloured,invalid,0.2
+5e92178e8ee4fe54b65b7c39,S2-R,Valid,0.575
+5e92178e8ee4fe54b65b7c39,S2-R,invalid,0.425
+5eebb8b7011d13119025dcf0,S1-R Coloured,Valid,0.55
+5eebb8b7011d13119025dcf0,S1-R Coloured,invalid,0.45
+5eebb8b7011d13119025dcf0,S2-R,Valid,0.475
+5eebb8b7011d13119025dcf0,S2-R,invalid,0.525
+5ef1f7026343e20b931a0cb0,S1-R Coloured,Valid,1
+5ef1f7026343e20b931a0cb0,S1-R Coloured,invalid,0
+5ef1f7026343e20b931a0cb0,S2-R,Valid,0.725
+5ef1f7026343e20b931a0cb0,S2-R,invalid,0.275
+5f00fa2353b5c10c934298fa,S1-R Coloured,Valid,0.15
+5f00fa2353b5c10c934298fa,S1-R Coloured,invalid,0.85
+5f00fa2353b5c10c934298fa,S2-R,Valid,0.575
+5f00fa2353b5c10c934298fa,S2-R,invalid,0.425
+5f19e162d258ca0921678a36,S1-R Coloured,Valid,0.4
+5f19e162d258ca0921678a36,S1-R Coloured,invalid,0.6
+5f19e162d258ca0921678a36,S2-R,Valid,0.375
+5f19e162d258ca0921678a36,S2-R,invalid,0.625
+5f25e860dd98342ce97e7403,S1-R Coloured,Valid,0.55
+5f25e860dd98342ce97e7403,S1-R Coloured,invalid,0.45
+5f25e860dd98342ce97e7403,S2-R,Valid,0.525
+5f25e860dd98342ce97e7403,S2-R,invalid,0.475
+5f50732850c7c600098593df,S1-R Coloured,Valid,1
+5f50732850c7c600098593df,S1-R Coloured,invalid,0
+5f50732850c7c600098593df,S2-R,Valid,0.75
+5f50732850c7c600098593df,S2-R,invalid,0.25
+5f588fb87204220009eb684f,S1-R Coloured,Valid,0.55
+5f588fb87204220009eb684f,S1-R Coloured,invalid,0.45
+5f588fb87204220009eb684f,S2-R,Valid,0.75
+5f588fb87204220009eb684f,S2-R,invalid,0.25
+5f5b2bd1b2430a23a9674a55,S1-R Coloured,Valid,0.75
+5f5b2bd1b2430a23a9674a55,S1-R Coloured,invalid,0.25
+5f5b2bd1b2430a23a9674a55,S2-R,Valid,0.7
+5f5b2bd1b2430a23a9674a55,S2-R,invalid,0.3
+5f5f5013f947f6000bd8ddcb,S1-R Coloured,Valid,1
+5f5f5013f947f6000bd8ddcb,S1-R Coloured,invalid,0
+5f5f5013f947f6000bd8ddcb,S2-R,Valid,0.65
+5f5f5013f947f6000bd8ddcb,S2-R,invalid,0.35
+5f6e36c7f042f033d0f97bc1,S1-R Coloured,Valid,0.5
+5f6e36c7f042f033d0f97bc1,S1-R Coloured,invalid,0.5
+5f6e36c7f042f033d0f97bc1,S2-R,Valid,0.55
+5f6e36c7f042f033d0f97bc1,S2-R,invalid,0.45
+5fa3dc74fefcb501f909c68a,S1-R Coloured,Valid,0.85
+5fa3dc74fefcb501f909c68a,S1-R Coloured,invalid,0.15
+5fa3dc74fefcb501f909c68a,S2-R,Valid,0.6
+5fa3dc74fefcb501f909c68a,S2-R,invalid,0.4
+5ff792bdc0091e494e352e9b,S1-R Coloured,Valid,0.8
+5ff792bdc0091e494e352e9b,S1-R Coloured,invalid,0.2
+5ff792bdc0091e494e352e9b,S2-R,Valid,0.65
+5ff792bdc0091e494e352e9b,S2-R,invalid,0.35
+600de3bf29e45455345fa8b5,S1-R Coloured,Valid,0.95
+600de3bf29e45455345fa8b5,S1-R Coloured,invalid,0.05
+600de3bf29e45455345fa8b5,S2-R,Valid,0.95
+600de3bf29e45455345fa8b5,S2-R,invalid,0.05
+6034e8e3628ecdf282096ccf,S1-R Coloured,Valid,0.5
+6034e8e3628ecdf282096ccf,S1-R Coloured,invalid,0.5
+6034e8e3628ecdf282096ccf,S2-R,Valid,0.525
+6034e8e3628ecdf282096ccf,S2-R,invalid,0.475
+60603496c9a3d83273a11297,S1-R Coloured,Valid,0.9
+60603496c9a3d83273a11297,S1-R Coloured,invalid,0.1
+60603496c9a3d83273a11297,S2-R,Valid,1
+60603496c9a3d83273a11297,S2-R,invalid,0
+6066d08253019ea549b1dd37,S1-R Coloured,Valid,0.75
+6066d08253019ea549b1dd37,S1-R Coloured,invalid,0.25
+6066d08253019ea549b1dd37,S2-R,Valid,0.725
+6066d08253019ea549b1dd37,S2-R,invalid,0.275
+6085a4cc5f5f9ba1a3bfd785,S1-R Coloured,Valid,0.45
+6085a4cc5f5f9ba1a3bfd785,S1-R Coloured,invalid,0.55
+6085a4cc5f5f9ba1a3bfd785,S2-R,Valid,0.475
+6085a4cc5f5f9ba1a3bfd785,S2-R,invalid,0.525
+6088e7b7d327c199db58cf61,S1-R Coloured,Valid,0.85
+6088e7b7d327c199db58cf61,S1-R Coloured,invalid,0.15
+6088e7b7d327c199db58cf61,S2-R,Valid,0.8
+6088e7b7d327c199db58cf61,S2-R,invalid,0.2
+60967660853e8fcaf410748b,S1-R Coloured,Valid,0.55
+60967660853e8fcaf410748b,S1-R Coloured,invalid,0.45
+60967660853e8fcaf410748b,S2-R,Valid,0.5
+60967660853e8fcaf410748b,S2-R,invalid,0.5
+60a97537bf4b23dbaba42403,S1-R Coloured,Valid,0.5
+60a97537bf4b23dbaba42403,S1-R Coloured,invalid,0.5
+60a97537bf4b23dbaba42403,S2-R,Valid,0.45
+60a97537bf4b23dbaba42403,S2-R,invalid,0.55
+60abbbce67335394c314a00a,S1-R Coloured,Valid,0.8
+60abbbce67335394c314a00a,S1-R Coloured,invalid,0.2
+60abbbce67335394c314a00a,S2-R,Valid,0.6
+60abbbce67335394c314a00a,S2-R,invalid,0.4
+60b3950b9a1de417d37bb8d2,S1-R Coloured,Valid,0.6
+60b3950b9a1de417d37bb8d2,S1-R Coloured,invalid,0.4
+60b3950b9a1de417d37bb8d2,S2-R,Valid,0.475
+60b3950b9a1de417d37bb8d2,S2-R,invalid,0.525
+60b91383e5e9ab787f581f7c,S1-R Coloured,Valid,0.9
+60b91383e5e9ab787f581f7c,S1-R Coloured,invalid,0.1
+60b91383e5e9ab787f581f7c,S2-R,Valid,0.825
+60b91383e5e9ab787f581f7c,S2-R,invalid,0.175
+60cb63abf6f1053d9577e1fe,S1-R Coloured,Valid,1
+60cb63abf6f1053d9577e1fe,S1-R Coloured,invalid,0
+60cb63abf6f1053d9577e1fe,S2-R,Valid,0.85
+60cb63abf6f1053d9577e1fe,S2-R,invalid,0.15
+60d432ce6e413e7509dd4b78,S1-R Coloured,Valid,0.6
+60d432ce6e413e7509dd4b78,S1-R Coloured,invalid,0.4
+60d432ce6e413e7509dd4b78,S2-R,Valid,0.6
+60d432ce6e413e7509dd4b78,S2-R,invalid,0.4
+60dbd1a6bb3d411213cef6bc,S1-R Coloured,Valid,0.6
+60dbd1a6bb3d411213cef6bc,S1-R Coloured,invalid,0.4
+60dbd1a6bb3d411213cef6bc,S2-R,Valid,0.5
+60dbd1a6bb3d411213cef6bc,S2-R,invalid,0.5
+60df713d7718de2a4065b80b,S1-R Coloured,Valid,0.45
+60df713d7718de2a4065b80b,S1-R Coloured,invalid,0.55
+60df713d7718de2a4065b80b,S2-R,Valid,0.75
+60df713d7718de2a4065b80b,S2-R,invalid,0.25
+60f91d62ce12ac59792a3f6e,S1-R Coloured,Valid,1
+60f91d62ce12ac59792a3f6e,S1-R Coloured,invalid,0
+60f91d62ce12ac59792a3f6e,S2-R,Valid,0.525
+60f91d62ce12ac59792a3f6e,S2-R,invalid,0.475
+60fcebba7345a976efc9c080,S1-R Coloured,Valid,1
+60fcebba7345a976efc9c080,S1-R Coloured,invalid,0
+60fcebba7345a976efc9c080,S2-R,Valid,0.95
+60fcebba7345a976efc9c080,S2-R,invalid,0.05
+60fd080d5476f4a77211bafb,S1-R Coloured,Valid,1
+60fd080d5476f4a77211bafb,S1-R Coloured,invalid,0
+60fd080d5476f4a77211bafb,S2-R,Valid,0.6
+60fd080d5476f4a77211bafb,S2-R,invalid,0.4
+60fd7f782b0c5f0b6503302a,S1-R Coloured,Valid,0.45
+60fd7f782b0c5f0b6503302a,S1-R Coloured,invalid,0.55
+60fd7f782b0c5f0b6503302a,S2-R,Valid,0.475
+60fd7f782b0c5f0b6503302a,S2-R,invalid,0.525
+60fdaf5b539bcc4d2724d6a4,S1-R Coloured,Valid,0.7
+60fdaf5b539bcc4d2724d6a4,S1-R Coloured,invalid,0.3
+60fdaf5b539bcc4d2724d6a4,S2-R,Valid,0.875
+60fdaf5b539bcc4d2724d6a4,S2-R,invalid,0.125
+60fdb83606ba18b3b54215fa,S1-R Coloured,Valid,0.7
+60fdb83606ba18b3b54215fa,S1-R Coloured,invalid,0.3
+60fdb83606ba18b3b54215fa,S2-R,Valid,0.65
+60fdb83606ba18b3b54215fa,S2-R,invalid,0.35
+6102dacce29b57b1e268c13a,S1-R Coloured,Valid,0.75
+6102dacce29b57b1e268c13a,S1-R Coloured,invalid,0.25
+6102dacce29b57b1e268c13a,S2-R,Valid,0.675
+6102dacce29b57b1e268c13a,S2-R,invalid,0.325
+610826a7604223dea33406f1,S1-R Coloured,Valid,0.45
+610826a7604223dea33406f1,S1-R Coloured,invalid,0.55
+610826a7604223dea33406f1,S2-R,Valid,0.4
+610826a7604223dea33406f1,S2-R,invalid,0.6
+6108ac1e801e23ad2a25e7f0,S1-R Coloured,Valid,0.8
+6108ac1e801e23ad2a25e7f0,S1-R Coloured,invalid,0.2
+6108ac1e801e23ad2a25e7f0,S2-R,Valid,0.475
+6108ac1e801e23ad2a25e7f0,S2-R,invalid,0.525
+6111234ac8cfa49e38acbfb4,S1-R Coloured,Valid,0.7
+6111234ac8cfa49e38acbfb4,S1-R Coloured,invalid,0.3
+6111234ac8cfa49e38acbfb4,S2-R,Valid,0.7
+6111234ac8cfa49e38acbfb4,S2-R,invalid,0.3
+6114681d3dcdb4a295eec181,S1-R Coloured,Valid,0.55
+6114681d3dcdb4a295eec181,S1-R Coloured,invalid,0.45
+6114681d3dcdb4a295eec181,S2-R,Valid,0.775
+6114681d3dcdb4a295eec181,S2-R,invalid,0.225
+611645b93f0840eae41426f5,S1-R Coloured,Valid,0.55
+611645b93f0840eae41426f5,S1-R Coloured,invalid,0.45
+611645b93f0840eae41426f5,S2-R,Valid,0.5
+611645b93f0840eae41426f5,S2-R,invalid,0.5
+611ff6cc935b6de3fff0b896,S1-R Coloured,Valid,0.95
+611ff6cc935b6de3fff0b896,S1-R Coloured,invalid,0.05
+611ff6cc935b6de3fff0b896,S2-R,Valid,0.775
+611ff6cc935b6de3fff0b896,S2-R,invalid,0.225
+61436bd26638b05527a135cb,S1-R Coloured,Valid,0.55
+61436bd26638b05527a135cb,S1-R Coloured,invalid,0.45
+61436bd26638b05527a135cb,S2-R,Valid,0.525
+61436bd26638b05527a135cb,S2-R,invalid,0.475
+6147724c13bb365774e24af1,S1-R Coloured,Valid,0.5
+6147724c13bb365774e24af1,S1-R Coloured,invalid,0.5
+6147724c13bb365774e24af1,S2-R,Valid,0.8
+6147724c13bb365774e24af1,S2-R,invalid,0.2
+6165ab1d62dc48b90438ea1d,S1-R Coloured,Valid,1
+6165ab1d62dc48b90438ea1d,S1-R Coloured,invalid,0
+6165ab1d62dc48b90438ea1d,S2-R,Valid,0.775
+6165ab1d62dc48b90438ea1d,S2-R,invalid,0.225
+616fe12dc33a81b79f5d958a,S1-R Coloured,Valid,0.5
+616fe12dc33a81b79f5d958a,S1-R Coloured,invalid,0.5
+616fe12dc33a81b79f5d958a,S2-R,Valid,0.55
+616fe12dc33a81b79f5d958a,S2-R,invalid,0.45
+61f2ad60a09e72f23cbaf86d,S1-R Coloured,Valid,0.25
+61f2ad60a09e72f23cbaf86d,S1-R Coloured,invalid,0.75
+61f2ad60a09e72f23cbaf86d,S2-R,Valid,0.55
+61f2ad60a09e72f23cbaf86d,S2-R,invalid,0.45
+622b64053557c445641d767a,S1-R Coloured,Valid,1
+622b64053557c445641d767a,S1-R Coloured,invalid,0
+622b64053557c445641d767a,S2-R,Valid,0.825
+622b64053557c445641d767a,S2-R,invalid,0.175
+627e807715abf2361938fd68,S1-R Coloured,Valid,0.5
+627e807715abf2361938fd68,S1-R Coloured,invalid,0.5
+627e807715abf2361938fd68,S2-R,Valid,0.475
+627e807715abf2361938fd68,S2-R,invalid,0.525
+6286672d0165aad8f1386c27,S1-R Coloured,Valid,0.4
+6286672d0165aad8f1386c27,S1-R Coloured,invalid,0.6
+6286672d0165aad8f1386c27,S2-R,Valid,0.675
+6286672d0165aad8f1386c27,S2-R,invalid,0.325
+628bbdac4ba783931f487fd8,S1-R Coloured,Valid,0.5
+628bbdac4ba783931f487fd8,S1-R Coloured,invalid,0.5
+628bbdac4ba783931f487fd8,S2-R,Valid,0.45
+628bbdac4ba783931f487fd8,S2-R,invalid,0.55
+628fc75b2561940f60f57b37,S1-R Coloured,Valid,0.6
+628fc75b2561940f60f57b37,S1-R Coloured,invalid,0.4
+628fc75b2561940f60f57b37,S2-R,Valid,0.375
+628fc75b2561940f60f57b37,S2-R,invalid,0.625
+629082739390703f993b12bd,S1-R Coloured,Valid,0.7
+629082739390703f993b12bd,S1-R Coloured,invalid,0.3
+629082739390703f993b12bd,S2-R,Valid,0.45
+629082739390703f993b12bd,S2-R,invalid,0.55
+6294c3c360a62ab4c18a4ffd,S1-R Coloured,Valid,0.55
+6294c3c360a62ab4c18a4ffd,S1-R Coloured,invalid,0.45
+6294c3c360a62ab4c18a4ffd,S2-R,Valid,0.625
+6294c3c360a62ab4c18a4ffd,S2-R,invalid,0.375
+629552d66a0ad893867fa675,S1-R Coloured,Valid,0.5
+629552d66a0ad893867fa675,S1-R Coloured,invalid,0.5
+629552d66a0ad893867fa675,S2-R,Valid,0.75
+629552d66a0ad893867fa675,S2-R,invalid,0.25
+62964243018e89ba8d83384b,S1-R Coloured,Valid,0.5
+62964243018e89ba8d83384b,S1-R Coloured,invalid,0.5
+62964243018e89ba8d83384b,S2-R,Valid,0.525
+62964243018e89ba8d83384b,S2-R,invalid,0.475
