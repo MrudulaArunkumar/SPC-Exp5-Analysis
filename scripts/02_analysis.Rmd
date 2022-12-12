@@ -805,6 +805,59 @@ Phase31TC_Awareness$S1TRAwareness <- factor(Phase31TC_Awareness$S1TRAwareness, l
 
 #write_csv(file = here("Data","Phase31TC_Awareness.csv"),Phase31TC_Awareness)
 
+
+#trial level
+dataAware <- dataAware %>% group_by(PROLIFIC_PID) %>% 
+  mutate(SSAwareness = ifelse(AwarenessType == "S-S Cued Recall", awarenext.corr,NA),
+         S2RAwareness = ifelse(AwarenessType== "S2-R Contingency", awarenext.corr,NA),
+         S2RAwarenessyn = ifelse(AwarenessType == "S2-R Contingency-yn", awarenext.corr,NA),
+         S1Awarenessyn = ifelse(AwarenessType=="S1-R Contingency-yn", awarenext.corr,NA),
+         S1Awareness = ifelse(AwarenessType == "S1-R Contingency", awarenext.corr,NA),
+         S1TransferAwareness = ifelse(AwarenessType == "S1-R Transfer Awareness", awarenext.corr,NA))
+
+#adding Stim2 to identify which stimulus was in the question
+Stim2list <- c("`neat`","`fair`","`calm`","`bold`")
+Stim1control <- c("`Ron`", "`Jack`")
+Stim1transfer <- c("`Max`", "`Tim`")
+dataAware <- dataAware %>% rename(Stim2 = "CorrectStim2")
+
+for (i in Stim2list) {
+  dataAware <- dataAware %>% 
+    mutate(Stim2 = ifelse(AwarenessType != "S-S Cued Recall" & str_detect(Question, i)==TRUE,i,Stim2))
+}
+
+for (j in Stim1control){
+  dataAware <- dataAware %>% 
+    mutate(Stim1 = ifelse(AwarenessType != "S-S Cued Recall" & str_detect(Question, j)==TRUE,j,Stim1))
+}
+
+for (k in Stim1transfer){
+  dataAware <- dataAware %>% 
+    mutate(Stim1 = ifelse(AwarenessType == "S1-R Transfer Awareness" & str_detect(Question, k)==TRUE,k,Stim1))
+}
+
+#run twice for now
+dataAware <- dataAware %>% 
+  mutate(Stim1 = ifelse(AwarenessType != "S-S Cued Recall", str_replace(Stim1,"[` `]",""),Stim1),
+         Stim2 = ifelse(AwarenessType != "S-S Cued Recall", str_replace(Stim2,"[` `]",""),Stim2))
+
+#filling up the Stim1 column when NA
+
+dataAware <- dataAware %>% 
+  mutate(Stim1 = case_when(Stim2 == "calm"~"Ron",
+                           Stim2 == "neat"~"Max",
+                           Stim2 == "bold"~"Jack",
+                           Stim2 == "fair"~"Tim",
+                           TRUE~Stim1)) %>% 
+  mutate(Stim2 = case_when(Stim1=="Ron"~"calm",
+                                  Stim1=="Max"~"neat",
+                                  Stim1=="Jack"~"bold",
+                                  Stim1=="Tim"~"fair",
+                           TRUE~Stim2))
+
+write_csv(file = here("Data","AwarenessdataforMLM.csv"),dataAware)
+
+
 ```
 
 ### Multi level modelling with awareness data
@@ -832,6 +885,44 @@ Phase31TCraw_Awareness <- Phase31TCraw_Awareness %>%
 
 #write_csv(file = here("data","DataforAwarenessMLM.csv"),Phase31TCraw_Awareness)
 
+
+#trial level
+Phase31_TC <- Phase31_TC %>% 
+  select(PROLIFIC_PID,ChoiceType,Phase,Condition,Stim1,Stim2,Validity,FreeChoiceResp,Response.keys,FreeChoiceAccuracy,RT_io)
+
+DataAwareselect <- dataAware %>% 
+  select(PROLIFIC_PID,Stim1,SSAwareness, S2RAwareness,S2RAwarenessyn, S1Awareness,S1Awarenessyn, S1TransferAwareness)
+
+DataAwareselect %>% group_by(PROLIFIC_PID,Stim1) %>% fill(SSAwareness,S2RAwareness,S2RAwarenessyn,S1Awareness,S1Awarenessyn,S1TransferAwareness) %>% distinct()
+Stim1inPhase31 <- c("Max","Tim")
+
+DataAwareselect <- DataAwareselect %>% 
+  filter(Stim1 %in% Stim1inPhase31)
+
+DataAwareselect <- DataAwareselect %>% group_by(PROLIFIC_PID,Stim1) %>% fill(SSAwareness,S2RAwareness,S2RAwarenessyn,S1Awareness,S1Awarenessyn,S1TransferAwareness) %>% drop_na(S1TransferAwareness)
+
+Awaremlm <- left_join(Phase31_TC,DataAwareselect, by = c("PROLIFIC_PID","Stim1"))
+
+#Awaremlm %>% count(SSAwareness,S2RAwareness,S2RAwarenessyn,S1TransferAwareness)
+
+#contrast coding for SSawareness
+
+Awaremlm <- Awaremlm %>% 
+  mutate(SSAwareness = case_when(SSAwareness==1~1,
+                                 SSAwareness==0~-1),
+         S2RAwareness = case_when(S2RAwareness==1~1,
+                                 S2RAwareness==0~-1),
+         S2RAwarenessyn = case_when(S2RAwarenessyn==1~1,
+                                   S2RAwarenessyn==0~-1),
+         S1TransferAwareness = case_when(S1TransferAwareness==1~1,
+                                         S1TransferAwareness==0~-1))
+
+Awaremlm %>% count(SSAwareness,S2RAwareness,S2RAwarenessyn,S1TransferAwareness)
+
+write_csv(file = here("data","Phase31withAwareness.csv"),Awaremlm)
+
+
+
 ```
 
 
@@ -839,17 +930,18 @@ Phase31TCraw_Awareness <- Phase31TCraw_Awareness %>%
 
 ```{r}
 m0 <- glmer(FreeChoiceAccuracy ~ 1|PROLIFIC_PID,
-            data = Phase31TCraw_Awareness,
+            data = Awaremlm,
             family = binomial,
             glmerControl(optCtrl = list(maxfun = 2e5)))
 
+tab_model(m0)
 ```
 
 #### 2. Model with the factors of SSAwareness and S2Awareness
 
 ```{r fig.show='hold',out.width="50%"}
-# m1 <- glmer(data = Phase31TCraw_Awareness,
-#             FreeChoiceAccuracy ~ 1+SSCRAwareness + S2Awareness + (1|PROLIFIC_PID),
+# m1 <- glmer(data = Awaremlm,
+#             FreeChoiceAccuracy ~ 1+SSAwareness + S2RAwareness + (1|PROLIFIC_PID),
 #             family = binomial,
 #             glmerControl(optCtrl = list(maxfun = 2e5)))
 # 
@@ -860,7 +952,7 @@ m1<- readRDS(file = here("data","Awareness_onlymaineffects.rds"), refhook = NULL
 tab_model(m1, show.est = T,show.se = T,show.stat = T,
           show.df = T, show.ci = F)
 
-afex_plot(m1, x = c("SSCRAwareness"),
+afex_plot(m1, x = c("SSAwareness"),
           error = "model",
           data_plot = T,
           error_ci = T,
@@ -868,8 +960,8 @@ afex_plot(m1, x = c("SSCRAwareness"),
           data_geom = geom_violin,
           data_arg = list(width = 0.3),
           mapping = c("color","fill"))+
-  geom_line(aes(group = 1), color = "black", linetype = "dashed")+
-  geom_hline(yintercept = 0.25, linetype = "dashed")+
+  geom_line(aes(group = 1), color = "black")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
   theme_apa()+
   scale_y_continuous(limits = c(0,1))+
   scale_fill_manual(values = c("#2D3047","#84B082"))+
@@ -878,7 +970,7 @@ afex_plot(m1, x = c("SSCRAwareness"),
        y = "Likelihood of choosing \n valid response")+
   theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
 
-afex_plot(m1, x = c("S2Awareness"),
+afex_plot(m1, x = c("S2RAwareness"),
           error = "model",
           data_plot = T,
           error_ci = T,
@@ -887,7 +979,7 @@ afex_plot(m1, x = c("S2Awareness"),
           data_arg = list(width = 0.3),
           mapping = c("color","fill"))+
   geom_line(aes(group = 1), color = "black")+
-  geom_hline(yintercept = 0.25, linetype = "dashed")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
   theme_apa()+
   scale_y_continuous(limits = c(0,1))+
   scale_fill_manual(values = c("#2D3047","#84B082"))+
@@ -901,10 +993,9 @@ afex_plot(m1, x = c("S2Awareness"),
 #### 3. Model 2 with the interaction
 
 ```{r fig.show='hold', out.width="50%"}
-# m2 <- glmer(data = Phase31TCraw_Awareness,
-#             FreeChoiceAccuracy ~ 1+(SSCRAwareness * S2Awareness) + (1+(SSCRAwareness * S2Awareness)|PROLIFIC_PID),
-#             family = binomial,
-#             glmerControl(optCtrl = list(maxfun = 2e5)))
+# m2 <- glmer(data = Awaremlm,
+#             FreeChoiceAccuracy ~ 1+(SSAwareness * S2RAwareness) + (1+(SSAwareness * S2RAwareness)|PROLIFIC_PID),
+#             family = binomial)
 # 
 # saveRDS(m2,file = here("data","Awareness_withinteractioneffects.rds"))
 
@@ -913,7 +1004,7 @@ m2 <- readRDS(file = here("data","Awareness_withinteractioneffects.rds"), refhoo
 tab_model(m2, show.est = T,show.se = T,show.stat = T,
           show.df = T, show.ci = F)
 
-afex_plot(m2, x = c("SSCRAwareness"),
+afex_plot(m2, x = c("SSAwareness"),
           error = "model",
           data_plot = T,
           error_ci = T,
@@ -931,7 +1022,7 @@ afex_plot(m2, x = c("SSCRAwareness"),
        y = "Likelihood of choosing \n valid response")+
   theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
 
-afex_plot(m2, x = c("S2Awareness"),
+afex_plot(m2, x = c("S2RAwareness"),
           error = "model",
           data_plot = T,
           error_ci = T,
@@ -952,6 +1043,83 @@ afex_plot(m2, x = c("S2Awareness"),
 
 ```
 
+#### 4. Only the SS Awareness or Only S1 Transfer awareness
+
+But need to check the model. Not yet pprinting the output as it should. Only the intercept is shown.
+
+```{r eval = FALSE}
+m3 <- glmer(data = Awaremlm,
+             FreeChoiceAccuracy ~ 1+S1TransferAwareness+ (1+S1TransferAwareness)|PROLIFIC_PID,
+             family = binomial)
+tab_model(m3, show.est = T,show.se = T,show.stat = T, show.ci = F)
+
+afex_plot(m3, x = c("S1TransferAwareness"),
+          error = "model",
+          data_plot = T,
+          error_ci = T,
+          #factor_levels = list(SSCRAwarness = c("Unaware","Aware")),
+          data_geom = geom_violin,
+          data_arg = list(width = 0.3),
+          mapping = c("color","fill"))+
+  geom_line(aes(group = 1), color = "black")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  theme_apa()+
+  scale_y_continuous(limits = c(0,1))+
+  scale_fill_manual(values = c("#2D3047","#84B082"))+
+  scale_color_manual(values = c("#2D3047","#84B082"))+
+  labs(x = "S-S association awareness",
+       y = "Likelihood of choosing \n valid response")+
+  theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
+
+```
+
+#### 5. Using SSawreness and the S1Transferawareness
+
+```{r}
+m4 <- glmer(data = Awaremlm,
+            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness) + (1+(SSAwareness * S1TransferAwareness)|PROLIFIC_PID),
+            family = binomial)
+
+tab_model(m4, show.se = T, show.stat = T, show.ci = F)
+
+afex_plot(m4, x = c("SSAwareness"),
+          error = "model",
+          data_plot = T,
+          error_ci = T,
+          #factor_levels = list(SSCRAwarness = c("Unaware","Aware")),
+          data_geom = geom_violin,
+          data_arg = list(width = 0.3),
+          mapping = c("color","fill"))+
+  geom_line(aes(group = 1), color = "black")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  theme_apa()+
+  scale_y_continuous(limits = c(0,1))+
+  scale_fill_manual(values = c("#2D3047","#84B082"))+
+  scale_color_manual(values = c("#2D3047","#84B082"))+
+  labs(x = "S-S association awareness",
+       y = "Likelihood of choosing \n valid response")+
+  theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
+
+afex_plot(m4, x = c("S1TransferAwareness"),
+          error = "model",
+          data_plot = T,
+          error_ci = T,
+          #factor_levels = list(SSCRAwarness = c("Unaware","Aware")),
+          data_geom = geom_violin,
+          data_arg = list(width = 0.3),
+          mapping = c("color","fill"))+
+  geom_line(aes(group = 1), color = "black")+
+  geom_hline(yintercept = 0.5, linetype = "dashed")+
+  theme_apa()+
+  scale_y_continuous(limits = c(0,1))+
+  scale_fill_manual(values = c("#2D3047","#84B082"))+
+  scale_color_manual(values = c("#2D3047","#84B082"))+
+  labs(x = "S-S association awareness",
+       y = "Likelihood of choosing \n valid response")+
+  theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
+
+
+```
 
 
 ### Plots showing the trends of the transfer per awareness
