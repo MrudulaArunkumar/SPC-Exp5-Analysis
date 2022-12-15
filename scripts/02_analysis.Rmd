@@ -773,6 +773,8 @@ AwareSummary <- dataAware %>%
   group_by(PROLIFIC_PID,AwarenessType) %>% 
   summarise(TotalAccuracy = sum(awarenext.corr, na.rm = TRUE))
 
+write_csv(file = here("data","AwareSummary.csv"),AwareSummary)
+
 attach(AwareSummary)
 kable(table(AwarenessType,TotalAccuracy),
       format = "html",
@@ -864,6 +866,7 @@ write_csv(file = here("Data","AwarenessdataforMLM.csv"),dataAware)
 
 ```{r}
 Phase31_TC <- read_csv(here("data","Phase31TC_raw.csv"))
+dataAware <- read_csv(here("Data","AwarenessdataforMLM.csv"))
 
 Phase31TCraw_Awareness <- Phase31_TC %>% 
   mutate(SSCRAwareness = ifelse(PROLIFIC_PID %in% SS_CR_aware, "Aware","Unaware"),
@@ -885,6 +888,13 @@ Phase31TCraw_Awareness <- Phase31TCraw_Awareness %>%
 
 #write_csv(file = here("data","DataforAwarenessMLM.csv"),Phase31TCraw_Awareness)
 
+```
+
+
+
+```{r}
+
+Phase31TC_Awareness <- read_csv(here("data","DataforAwarenessMLM.csv"))
 
 #trial level
 Phase31_TC <- Phase31_TC %>% 
@@ -929,6 +939,7 @@ write_csv(file = here("data","Phase31withAwareness.csv"),Awaremlm)
 #### 1. Intercept Model with Free choice accuracy as dv
 
 ```{r}
+Awaremlm <- read_csv(here("Data","Phase31withAwareness.csv"))
 m0 <- glmer(FreeChoiceAccuracy ~ 1|PROLIFIC_PID,
             data = Awaremlm,
             family = binomial,
@@ -940,12 +951,12 @@ tab_model(m0)
 #### 2. Model with the factors of SSAwareness and S2Awareness
 
 ```{r fig.show='hold',out.width="50%"}
-# m1 <- glmer(data = Awaremlm,
-#             FreeChoiceAccuracy ~ 1+SSAwareness + S2RAwareness + (1|PROLIFIC_PID),
-#             family = binomial,
-#             glmerControl(optCtrl = list(maxfun = 2e5)))
-# 
-# saveRDS(m1,file = here("data","Awareness_onlymaineffects.rds"))
+m1 <- glmer(data = Awaremlm,
+            FreeChoiceAccuracy ~ 1+SSAwareness + S2RAwareness + (1|PROLIFIC_PID),
+            family = binomial,
+            glmerControl(optCtrl = list(maxfun = 2e5)))
+
+saveRDS(m1,file = here("data","Awareness_onlymaineffects.rds"))
 
 
 m1<- readRDS(file = here("data","Awareness_onlymaineffects.rds"), refhook = NULL)
@@ -993,11 +1004,11 @@ afex_plot(m1, x = c("S2RAwareness"),
 #### 3. Model 2 with the interaction
 
 ```{r fig.show='hold', out.width="50%"}
-# m2 <- glmer(data = Awaremlm,
-#             FreeChoiceAccuracy ~ 1+(SSAwareness * S2RAwareness) + (1+(SSAwareness * S2RAwareness)|PROLIFIC_PID),
-#             family = binomial)
-# 
-# saveRDS(m2,file = here("data","Awareness_withinteractioneffects.rds"))
+m2 <- glmer(data = Awaremlm,
+            FreeChoiceAccuracy ~ 1+(SSAwareness * S2RAwareness) + (1|PROLIFIC_PID),
+            family = binomial)
+
+saveRDS(m2,file = here("data","Awareness_withinteractioneffects.rds"))
 
 m2 <- readRDS(file = here("data","Awareness_withinteractioneffects.rds"), refhook = NULL)
 
@@ -1049,8 +1060,12 @@ But need to check the model. Not yet pprinting the output as it should. Only the
 
 ```{r eval = FALSE}
 m3 <- glmer(data = Awaremlm,
-             FreeChoiceAccuracy ~ 1+S1TransferAwareness+ (1+S1TransferAwareness)|PROLIFIC_PID,
+             FreeChoiceAccuracy ~ 1+S1TransferAwareness+ (1|PROLIFIC_PID),
              family = binomial)
+
+saveRDS(m3, file = here("data","AwarenesswithS1T.rds"))
+
+m3 <- read_csv(here("data","AwarenesswithS1T.rds"))
 tab_model(m3, show.est = T,show.se = T,show.stat = T, show.ci = F)
 
 afex_plot(m3, x = c("S1TransferAwareness"),
@@ -1077,8 +1092,11 @@ afex_plot(m3, x = c("S1TransferAwareness"),
 
 ```{r}
 m4 <- glmer(data = Awaremlm,
-            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness) + (1+(SSAwareness * S1TransferAwareness)|PROLIFIC_PID),
+            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness) + (1|PROLIFIC_PID),
             family = binomial)
+saveRDS(m4, file = here("data","AwarenesswithS1T&SS.rds"))
+
+m4 <- read_csv(here("data","AwarenesswithS1T&SS.rds"))
 
 tab_model(m4, show.se = T, show.stat = T, show.ci = F)
 
@@ -1119,6 +1137,18 @@ afex_plot(m4, x = c("S1TransferAwareness"),
   theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
 
 
+```
+
+
+```{r}
+m4 <- glmer(data = Awaremlm,
+            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness * S2RAwareness) + (1|PROLIFIC_PID),
+            family = binomial,
+            glmerControl(optimizer = "bobyqa",optCtrl = list(maxfun = 2e5)))
+
+saveRDS(m4,file = here("data","Awarenesswithall3factors.rds"))
+
+tab_model(m4, show.stat = T, show.se = T, show.est = T, show.ci = F)
 ```
 
 
