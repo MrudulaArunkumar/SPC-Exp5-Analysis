@@ -773,8 +773,6 @@ AwareSummary <- dataAware %>%
   group_by(PROLIFIC_PID,AwarenessType) %>% 
   summarise(TotalAccuracy = sum(awarenext.corr, na.rm = TRUE))
 
-write_csv(file = here("data","AwareSummary.csv"),AwareSummary)
-
 attach(AwareSummary)
 kable(table(AwarenessType,TotalAccuracy),
       format = "html",
@@ -866,35 +864,13 @@ write_csv(file = here("Data","AwarenessdataforMLM.csv"),dataAware)
 
 ```{r}
 Phase31_TC <- read_csv(here("data","Phase31TC_raw.csv"))
-dataAware <- read_csv(here("Data","AwarenessdataforMLM.csv"))
+dataAware <- read_csv(here("data","AwarenessdataforMLM.csv"))
 
-Phase31TCraw_Awareness <- Phase31_TC %>% 
-  mutate(SSCRAwareness = ifelse(PROLIFIC_PID %in% SS_CR_aware, "Aware","Unaware"),
-         S1TRAwareness = ifelse(PROLIFIC_PID %in% S1_Q_aware, "Transferred","Not transferred"),
-         S1CRAwareness = ifelse(PROLIFIC_PID %in% S1C_Q_aware, "Aware","Unaware"),
-         S2Awareness = ifelse(PROLIFIC_PID %in% S2_Q_aware, "Aware","Unaware"))
-Phase31TCraw_Awareness$S1TRAwareness <- factor(Phase31TCraw_Awareness$S1TRAwareness, levels = c("Transferred", "Not transferred"))
+dataAware %>% filter(AwarenessType == "S-S Cued Recall") %>% count(Option1 == "Don't Know", Option2 == "Don't Know", Option3 == "Don't Know")
+dataAware %>% count(AwarenessType,GuessResp.keys,awarenext.keys, awarenext.corr)
 
-Phase31TCraw_Awareness <- Phase31TCraw_Awareness %>% 
-  select(PROLIFIC_PID,ChoiceType,Phase,Condition,Stim1,Stim2,Validity,FreeChoiceResp,Response.keys,FreeChoiceAccuracy,RT_io,SSCRAwareness,S1TRAwareness,S1CRAwareness,S2Awareness)
+dataAware %>% filter(AwarenessType == "S1-R Transfer Awareness") %>% count(awarenext.corr,awarenext.keys) %>% kable(caption = "Accuracy of S1-R Transfer")
 
-#table(Phase31TCraw_Awareness$FreeChoiceAccuracy,Phase31TCraw_Awareness$Validity)
-##compute new variables - contrast coding
-Phase31TCraw_Awareness <- Phase31TCraw_Awareness %>% 
-  mutate(SSCRAwareness = ifelse(SSCRAwareness == "Aware",1,-1),
-         S2Awareness = ifelse(S2Awareness=="Aware",1,-1),
-         S1CRAwareness = ifelse(S1CRAwareness=="Aware",1,-1),
-         S1TRAwareness = ifelse(S1TRAwareness=="Transferred",1,-1))
-
-#write_csv(file = here("data","DataforAwarenessMLM.csv"),Phase31TCraw_Awareness)
-
-```
-
-
-
-```{r}
-
-Phase31TC_Awareness <- read_csv(here("data","DataforAwarenessMLM.csv"))
 
 #trial level
 Phase31_TC <- Phase31_TC %>% 
@@ -912,25 +888,55 @@ DataAwareselect <- DataAwareselect %>%
 DataAwareselect <- DataAwareselect %>% group_by(PROLIFIC_PID,Stim1) %>% fill(SSAwareness,S2RAwareness,S2RAwarenessyn,S1Awareness,S1Awarenessyn,S1TransferAwareness) %>% drop_na(S1TransferAwareness)
 
 Awaremlm <- left_join(Phase31_TC,DataAwareselect, by = c("PROLIFIC_PID","Stim1"))
-
 #Awaremlm %>% count(SSAwareness,S2RAwareness,S2RAwarenessyn,S1TransferAwareness)
+
+
 
 #contrast coding for SSawareness
 
-Awaremlm <- Awaremlm %>% 
-  mutate(SSAwareness = case_when(SSAwareness==1~1,
-                                 SSAwareness==0~-1),
-         S2RAwareness = case_when(S2RAwareness==1~1,
-                                 S2RAwareness==0~-1),
-         S2RAwarenessyn = case_when(S2RAwarenessyn==1~1,
-                                   S2RAwarenessyn==0~-1),
-         S1TransferAwareness = case_when(S1TransferAwareness==1~1,
-                                         S1TransferAwareness==0~-1))
+# Awaremlm <- Awaremlm %>% 
+#   mutate(SSAwareness = case_when(SSAwareness==1~1,
+#                                  SSAwareness==0~-1),
+#          S2RAwareness = case_when(S2RAwareness==1~1,
+#                                  S2RAwareness==0~-1),
+#          S2RAwarenessyn = case_when(S2RAwarenessyn==1~1,
+#                                    S2RAwarenessyn==0~-1),
+#          S1TransferAwareness = case_when(S1TransferAwareness==1~1,
+#                                          S1TransferAwareness==0~-1))
 
-Awaremlm %>% count(SSAwareness,S2RAwareness,S2RAwarenessyn,S1TransferAwareness)
+summary(Awaremlm$SSAwareness)
+summary(Awaremlm$S2RAwareness)
+summary(Awaremlm$S1TransferAwareness)
+Awaremlm %>% count(SSAwareness) %>% kable(caption = "SS awareness")
+Awaremlm %>% count(S2RAwareness) %>% kable(caption = "S2R Awareness")
+Awaremlm %>% group_by(PROLIFIC_PID) %>% count(S1TransferAwareness) %>% kable(caption = "S1Transfer Awareness")
+
+## centering
+#S2R mean computation to verify the centering
+  means.S2RAwareness <- aggregate(data = Awaremlm, S2RAwareness ~ PROLIFIC_PID, mean)
+  names(means.S2RAwareness)[2]<-"means_S2RAwareness"
+  
+  Awaremlm<-merge (Awaremlm, means.S2RAwareness, by="PROLIFIC_PID")
+  
+  Awaremlm$means_S2RAwareness_cwp <- Awaremlm$S2RAwareness-Awaremlm$means_S2RAwareness
+  summary(Awaremlm$means_S2RAwareness_cwp)
+  
+  #check whether person mean centering was correctly done
+  all(Awaremlm$S2RAwareness == Awaremlm$means_S2RAwareness_cwp+Awaremlm$means_S2RAwareness)
+  
+#SSAwareness mean computation to verify the centering
+  means.SSAwareness <- aggregate(data = Awaremlm, SSAwareness ~ PROLIFIC_PID, mean)
+  names(means.SSAwareness)[2]<-"means_SSAwareness"
+  
+  Awaremlm<-merge (Awaremlm, means.SSAwareness, by="PROLIFIC_PID")
+  
+  Awaremlm$means_SSAwareness_cwp <- Awaremlm$SSAwareness-Awaremlm$means_SSAwareness
+  summary(Awaremlm$means_SSAwareness_cwp)
+  
+  #check whether person mean centering was correctly done
+  all(Awaremlm$SSAwareness == Awaremlm$means_SSAwareness_cwp+Awaremlm$means_SSAwareness)
 
 write_csv(file = here("data","Phase31withAwareness.csv"),Awaremlm)
-
 
 
 ```
@@ -939,7 +945,8 @@ write_csv(file = here("data","Phase31withAwareness.csv"),Awaremlm)
 #### 1. Intercept Model with Free choice accuracy as dv
 
 ```{r}
-Awaremlm <- read_csv(here("Data","Phase31withAwareness.csv"))
+Awaremlm <- read_csv(here("data","Phase31withAwareness.csv"))
+
 m0 <- glmer(FreeChoiceAccuracy ~ 1|PROLIFIC_PID,
             data = Awaremlm,
             family = binomial,
@@ -952,7 +959,7 @@ tab_model(m0)
 
 ```{r fig.show='hold',out.width="50%"}
 m1 <- glmer(data = Awaremlm,
-            FreeChoiceAccuracy ~ 1+SSAwareness + S2RAwareness + (1|PROLIFIC_PID),
+            FreeChoiceAccuracy ~ 1+means_SSAwareness_cwp + means_S2RAwareness_cwp + (1|PROLIFIC_PID),
             family = binomial,
             glmerControl(optCtrl = list(maxfun = 2e5)))
 
@@ -961,7 +968,8 @@ saveRDS(m1,file = here("data","Awareness_onlymaineffects.rds"))
 
 m1<- readRDS(file = here("data","Awareness_onlymaineffects.rds"), refhook = NULL)
 tab_model(m1, show.est = T,show.se = T,show.stat = T,
-          show.df = T, show.ci = F)
+          show.df = F, show.ci = F)
+plot(effects::allEffects(m1))
 
 afex_plot(m1, x = c("SSAwareness"),
           error = "model",
@@ -1005,7 +1013,7 @@ afex_plot(m1, x = c("S2RAwareness"),
 
 ```{r fig.show='hold', out.width="50%"}
 m2 <- glmer(data = Awaremlm,
-            FreeChoiceAccuracy ~ 1+(SSAwareness * S2RAwareness) + (1|PROLIFIC_PID),
+            FreeChoiceAccuracy ~ 1+(means_SSAwareness_cwp * means_S2RAwareness_cwp) + (1|PROLIFIC_PID),
             family = binomial)
 
 saveRDS(m2,file = here("data","Awareness_withinteractioneffects.rds"))
@@ -1013,7 +1021,32 @@ saveRDS(m2,file = here("data","Awareness_withinteractioneffects.rds"))
 m2 <- readRDS(file = here("data","Awareness_withinteractioneffects.rds"), refhook = NULL)
 
 tab_model(m2, show.est = T,show.se = T,show.stat = T,
-          show.df = T, show.ci = F)
+          show.df = F, show.ci = F)
+
+
+ef1 <- effects::effect(term="means_SSAwareness_cwp*means_S2RAwareness_cwp", mod=m2)
+ef1 <- as.data.frame(ef1)
+#allm2 <- effects::allEffects(m2)
+
+ef1$means_S2RAwareness_cwp <- as.factor(ef1$means_S2RAwareness_cwp)
+
+#3only main effects
+# ggplot(ef1, aes(x=means_S2RAwareness_cwp, y=fit)) + 
+#     geom_point() + 
+#     geom_line(size=1.2) +
+#     geom_ribbon(aes(ymin=fit-se, ymax=fit+se),alpha=0.3) + 
+#     labs(title = "Interaction between SS Awareness and S2R Awareness", x= "Having SS Awareness (centered within participant, -1=Unaware, 1=Aware)", y="Free Choice Accuracy") + theme_classic() + theme(text=element_text(size=20))
+# 
+#plotting the interaction
+ggplot(ef1, aes(x=means_SSAwareness_cwp, y=fit, color=means_S2RAwareness_cwp,group=means_S2RAwareness_cwp)) +
+    geom_point() +
+    geom_line(size=1.2) +
+    geom_ribbon(aes(ymin=fit-se, ymax=fit+se, fill=means_S2RAwareness_cwp),alpha=0.3) +
+    labs(title = "Interaction between SS Awareness and S2R Awareness", x= "Having SS Awareness \n (centered within participant, -1=Unaware, 1=Aware)", y="Free Choice Accuracy", color="Having S2R Awareness", fill="Having S2R Awareness") + 
+  scale_color_discrete()+
+  scale_fill_discrete()+
+  theme_apa() + 
+  theme(text=element_text(size=18, family = "Times"))
 
 afex_plot(m2, x = c("SSAwareness"),
           error = "model",
@@ -1060,12 +1093,8 @@ But need to check the model. Not yet pprinting the output as it should. Only the
 
 ```{r eval = FALSE}
 m3 <- glmer(data = Awaremlm,
-             FreeChoiceAccuracy ~ 1+S1TransferAwareness+ (1|PROLIFIC_PID),
+             FreeChoiceAccuracy ~ 1+S1TransferAwareness+ (1+S1TransferAwareness)|PROLIFIC_PID,
              family = binomial)
-
-saveRDS(m3, file = here("data","AwarenesswithS1T.rds"))
-
-m3 <- read_csv(here("data","AwarenesswithS1T.rds"))
 tab_model(m3, show.est = T,show.se = T,show.stat = T, show.ci = F)
 
 afex_plot(m3, x = c("S1TransferAwareness"),
@@ -1092,11 +1121,8 @@ afex_plot(m3, x = c("S1TransferAwareness"),
 
 ```{r}
 m4 <- glmer(data = Awaremlm,
-            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness) + (1|PROLIFIC_PID),
+            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness) + (1+(SSAwareness * S1TransferAwareness)|PROLIFIC_PID),
             family = binomial)
-saveRDS(m4, file = here("data","AwarenesswithS1T&SS.rds"))
-
-m4 <- read_csv(here("data","AwarenesswithS1T&SS.rds"))
 
 tab_model(m4, show.se = T, show.stat = T, show.ci = F)
 
@@ -1137,18 +1163,6 @@ afex_plot(m4, x = c("S1TransferAwareness"),
   theme(text = element_text(size = 18, family = "Times"), legend.position = "none")
 
 
-```
-
-
-```{r}
-m4 <- glmer(data = Awaremlm,
-            FreeChoiceAccuracy ~ 1+(SSAwareness * S1TransferAwareness * S2RAwareness) + (1|PROLIFIC_PID),
-            family = binomial,
-            glmerControl(optimizer = "bobyqa",optCtrl = list(maxfun = 2e5)))
-
-saveRDS(m4,file = here("data","Awarenesswithall3factors.rds"))
-
-tab_model(m4, show.stat = T, show.se = T, show.est = T, show.ci = F)
 ```
 
 
